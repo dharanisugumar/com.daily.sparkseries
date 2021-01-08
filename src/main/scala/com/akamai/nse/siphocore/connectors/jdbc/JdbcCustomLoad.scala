@@ -25,6 +25,8 @@ class JdbcCustomLoad(username: String, password: String, driver: String, dbURL: 
   @BeanProperty var retry: Int = 3
   @BeanProperty var chunk: Int = 50
 
+  //properties need to be fixed
+
   private lazy val logger = LoggerFactory.getLogger(this.getClass)
 
   //logger.info(s" keystore $keyStore and $keyStoreType and $username")
@@ -34,7 +36,7 @@ class JdbcCustomLoad(username: String, password: String, driver: String, dbURL: 
   try Class.forName("oracle.jdbc.driver.OracleDriver")
   catch {
     case e: ClassNotFoundException =>
-      System.out.println("Where is your Oracle JDBC Driver?")
+      System.out.println("Where is your Oracle JDBC Driver?") //to be changed to logger
       e.printStackTrace()
 
   }
@@ -49,12 +51,12 @@ class JdbcCustomLoad(username: String, password: String, driver: String, dbURL: 
 
 
     val file = Source.fromFile(fileName)
-    val qry = file.mkString.replaceAllLiterally(s"{process_id}", field).replaceAllLiterally("{retry_num}", retry.toString).replaceAllLiterally("{max_chunk_num}", chunk.toString)
+    val qry =  file.mkString.replaceAllLiterally(s"{process_id}", field).replaceAllLiterally("{retry_num}", retry.toString).replaceAllLiterally("{max_chunk_num}", chunk.toString)
     logger.info("Query to Execute: "+qry)
     qry
 }
 
-
+//source.close, filename exception
 
   override def truncate(): ListMap[String,String] = {
 
@@ -63,13 +65,15 @@ class JdbcCustomLoad(username: String, password: String, driver: String, dbURL: 
     for (sql <- sqlArr) {
       try{
       stmt.executeQuery(sql)
-      logger.info(s" Truncating Stage Table Successful :$sql")}
+      logger.info(s" Truncating Stage Table Successful :$sql")
+      listMap += (field -> "success")}
       catch {
         case e: SQLException =>
           logger.error(s"Could not execute query ${e.getMessage}")
+          listMap += (field -> "failure")
       }
     }
-    listMap += (field -> "success")
+
     listMap
   }
 
@@ -86,10 +90,6 @@ class JdbcCustomLoad(username: String, password: String, driver: String, dbURL: 
         logger.info(s" Bex Preprocess : Skip :  ${field.toUpperCase()} does not exist!! ") //Module-name status
         System.exit(0)
       }
-        //throw new NullPointerException(
-
-
-
       list += queue
       logger.info(field +":" + queue)
     }}catch {
@@ -134,18 +134,13 @@ class JdbcCustomLoad(username: String, password: String, driver: String, dbURL: 
     listMap
   }
 
+  //
 
   override def insert(key:String): ListMap[String,String] = {
 
     val sql = buildQuery(file,key)
     connection.prepareCall(sql).execute()
-    //try{
-    //stmt.p(sql)
-    //
-//    catch {
-//      case e: SQLException =>
-//        logger.error(s"Could not execute query ${e.getMessage}")
-//    }
+
     logger.info(s" EXECUTED ${field} SQL: ${"success"}")
     listMap += (field -> "success")
     listMap}

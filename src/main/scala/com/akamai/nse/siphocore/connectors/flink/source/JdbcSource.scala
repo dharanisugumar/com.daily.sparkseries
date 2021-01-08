@@ -62,7 +62,9 @@ class JdbcSource(dataSource: BasicDataSource, sql: String,queryParameters:Array[
        BasicTypeInfo.BIG_DEC_TYPE_INFO,
        BasicTypeInfo.STRING_TYPE_INFO,
        BasicTypeInfo.STRING_TYPE_INFO,
-       BasicTypeInfo.STRING_TYPE_INFO))
+       BasicTypeInfo.STRING_TYPE_INFO,
+       BasicTypeInfo.STRING_TYPE_INFO
+       ))
       .setParametersProvider(paramProvider)
       .setResultSetType(ResultSet.TYPE_SCROLL_INSENSITIVE)
     .finish
