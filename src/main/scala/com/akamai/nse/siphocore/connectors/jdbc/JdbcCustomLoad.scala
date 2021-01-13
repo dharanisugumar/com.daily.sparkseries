@@ -88,15 +88,20 @@ class JdbcCustomLoad(username: String, password: String, driver: String, dbURL: 
       val queue = rs.getString(field)
       if(queue == null){
         logger.info(s" Bex Preprocess : Skip :  ${field.toUpperCase()} does not exist!! ") //Module-name status
+        listMap += (field -> "failed")
         System.exit(0)
       }
       list += queue
       logger.info(field +":" + queue)
-    }}catch {
+    }
+      listMap += (field -> list.mkString(","))
+    }catch {
       case e: SQLException =>
         logger.error(s"Could not execute query ${e.getMessage}")
+        listMap += (field -> "failed")
+        System.exit(1)
     }
-    listMap += (field -> list.mkString(","))
+
     listMap
   }
 
@@ -125,12 +130,14 @@ class JdbcCustomLoad(username: String, password: String, driver: String, dbURL: 
           logger.info(" list " + list)
         }
       }
+      listMap += (field -> list.mkString(","))
     }catch {
       case e: SQLException =>
         logger.error(s"Could not execute query ${e.getMessage}")
+        listMap += (field -> "failed")
+        System.exit(1)
     }
-    listMap += (field -> list.mkString(","))
-    //logger.info(field + list.mkString(","))
+
     listMap
   }
 
@@ -139,22 +146,33 @@ class JdbcCustomLoad(username: String, password: String, driver: String, dbURL: 
   override def insert(key:String): ListMap[String,String] = {
 
     val sql = buildQuery(file,key)
-    connection.prepareCall(sql).execute()
-
-    logger.info(s" EXECUTED ${field} SQL: ${"success"}")
-    listMap += (field -> "success")
-    listMap}
+    try {
+      connection.prepareCall(sql).execute()
+      listMap += (field -> "success")
+      logger.info(s" EXECUTED ${field} SQL: ${"success"}")
+    }catch{
+      case e: SQLException =>
+        logger.error(s"Could not execute query ${e.getMessage}")
+        listMap += (field -> "failed")
+        System.exit(1)
+    }
+    listMap
+  }
 
   override def update(key:String): ListMap[String,String] = {
     val sql = buildQuery(file,key)
     try{
-    stmt.executeUpdate(sql)}
+    stmt.executeUpdate(sql)
+      listMap += (field -> "success")
+      logger.info(s" EXECUTED ${field} SQL: ${"success"}")
+    }
     catch {
       case e: SQLException =>
         logger.error(s"Could not execute query ${e.getMessage}")
+        listMap += (field -> "failed")
+        System.exit(1)
     }
-    logger.info(s" EXECUTED ${field} SQL: ${"success"}")
-    listMap += (field -> "success")
+
     listMap
   }
 
