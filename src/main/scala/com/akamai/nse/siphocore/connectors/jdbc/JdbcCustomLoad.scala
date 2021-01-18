@@ -52,7 +52,7 @@ class JdbcCustomLoad(username: String, password: String, driver: String, dbURL: 
 
     val file = Source.fromFile(fileName)
     val qry =  file.mkString.replaceAllLiterally(s"{process_id}", field).replaceAllLiterally("{retry_num}", retry.toString).replaceAllLiterally("{max_chunk_num}", chunk.toString)
-    logger.info("Query to Execute: "+qry)
+    logger.debug("Query to Execute: "+qry)
     qry
 }
 
@@ -65,12 +65,13 @@ class JdbcCustomLoad(username: String, password: String, driver: String, dbURL: 
     for (sql <- sqlArr) {
       try{
       stmt.executeQuery(sql)
-      logger.info(s" Truncating Stage Table Successful :$sql")
+      logger.debug(s" Truncating Stage Table Successful :$sql")
       listMap += (field -> "success")}
       catch {
         case e: SQLException =>
           logger.error(s"Could not execute query ${e.getMessage}")
           listMap += (field -> "failure")
+          throw new RuntimeException(e)
       }
     }
 
@@ -82,21 +83,21 @@ class JdbcCustomLoad(username: String, password: String, driver: String, dbURL: 
     var list = new mutable.MutableList[String]()
     try{
     val rs = stmt.executeQuery(sql)
-    logger.info(s" ${field} Query Executed! ")
+    logger.debug(s" ${field} Query Executed! ")
 
     while (rs.next()) {
       val queue = rs.getString(field)
-      if(queue == null){
-        logger.info(s" Bex Preprocess : Skip :  ${field.toUpperCase()} does not exist!! ") //Module-name status
-        System.exit(0)
-      }
       list += queue
-      logger.info(field +":" + queue)
-    }}catch {
+      logger.debug(field +":" + queue)
+    }
+      listMap += (field -> list.mkString(","))
+    }catch {
       case e: SQLException =>
         logger.error(s"Could not execute query ${e.getMessage}")
+        listMap += (field -> "failed")
+        throw new RuntimeException(e)
     }
-    listMap += (field -> list.mkString(","))
+
     listMap
   }
 
@@ -106,31 +107,33 @@ class JdbcCustomLoad(username: String, password: String, driver: String, dbURL: 
     var list = new mutable.MutableList[String]()
     try {
       val rs = stmt.executeQuery(sql)
-      logger.info(s"  ${field}  Query Executed! ")
+      logger.debug(s"  ${field}  Query Executed! ")
 
       val fields = field.split(",")
-      logger.info(" fields " + fields.foreach(println))
+      logger.debug(" fields " + fields.foreach(println))
 
       while (rs.next()) {
         if (fields.size > 1) {
           for (col <- fields) {
             val queue = rs.getString(col)
             //list += queue
-            logger.info(" queue " + rs.getDate(col))
+            logger.debug(" queue " + rs.getDate(col))
             listMap += (col -> queue)
           }
         } else {
           val queue = rs.getString(field)
           list += queue
-          logger.info(" list " + list)
+          logger.debug(" list " + list)
         }
       }
+      listMap += (field -> list.mkString(","))
     }catch {
       case e: SQLException =>
         logger.error(s"Could not execute query ${e.getMessage}")
+        listMap += (field -> "failed")
+        throw new RuntimeException(e)
     }
-    listMap += (field -> list.mkString(","))
-    //logger.info(field + list.mkString(","))
+
     listMap
   }
 
@@ -139,22 +142,33 @@ class JdbcCustomLoad(username: String, password: String, driver: String, dbURL: 
   override def insert(key:String): ListMap[String,String] = {
 
     val sql = buildQuery(file,key)
-    connection.prepareCall(sql).execute()
-
-    logger.info(s" EXECUTED ${field} SQL: ${"success"}")
-    listMap += (field -> "success")
-    listMap}
+    try {
+      connection.prepareCall(sql).execute()
+      listMap += (field -> "success")
+      logger.debug(s" EXECUTED ${field} SQL: ${"success"}")
+    }catch{
+      case e: SQLException =>
+        logger.error(s"Could not execute query ${e.getMessage}")
+        listMap += (field -> "failed")
+        throw new RuntimeException(e)
+    }
+    listMap
+  }
 
   override def update(key:String): ListMap[String,String] = {
     val sql = buildQuery(file,key)
     try{
-    stmt.executeUpdate(sql)}
+    stmt.executeUpdate(sql)
+      listMap += (field -> "success")
+      logger.debug(s" EXECUTED ${field} SQL: ${"success"}")
+    }
     catch {
       case e: SQLException =>
         logger.error(s"Could not execute query ${e.getMessage}")
+        listMap += (field -> "failed")
+        throw new RuntimeException(e)
     }
-    logger.info(s" EXECUTED ${field} SQL: ${"success"}")
-    listMap += (field -> "success")
+
     listMap
   }
 
