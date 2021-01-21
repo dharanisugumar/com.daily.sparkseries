@@ -57,3 +57,12 @@ case class SiphoNullPointerException(message: String,className:String,methodName
     override val getMessage = JsonUtil.toJson(ExceptionMessage(message, className, methodName, lineNumber))
   }
 }
+
+
+case class SiphoKeyNotFoundException(message: String,className:String,methodName:String,lineNumber:Int) extends Exception with SiphoCustomException {
+
+  throw new Exception() with SiphoCustomException {
+
+    override val getMessage = JsonUtil.toJson(ExceptionMessage(message, className, methodName, lineNumber))
+  }
+}
