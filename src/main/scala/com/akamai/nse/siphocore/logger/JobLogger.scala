@@ -7,9 +7,7 @@ import com.akamai.nse.siphocore.logger.LogLevelEnum.LogLevel
 import org.apache.commons.lang3.exception.ExceptionUtils
 import org.slf4j.Logger
 
-class JobLogger(logger:Logger  ) extends LoggerTrait {
-
-  //protected val logger: Logger = LoggerFactory.getLogger(getClass.getName)
+class JobLogger(logger:Logger) extends LoggerTrait with Serializable {
 
   def eventLog(logLevel:LogLevel,job: Job,logMsg :LogMessage): Unit = {
 
