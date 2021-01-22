@@ -1,12 +1,9 @@
 package com.akamai.nse.siphocore.exception
 
-import java.io.FileNotFoundException
-
-object Exception  {
 
 
-//  class FileNotFoundException extends FileNotFoundException
-//  class IOException extends IOException
+class ExceptionInfo  {
+
 
 
   private var exception = null

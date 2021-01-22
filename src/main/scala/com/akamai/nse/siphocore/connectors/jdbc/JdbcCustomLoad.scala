@@ -1,9 +1,11 @@
 package com.akamai.nse.siphocore.connectors.jdbc
 
+import java.io.FileNotFoundException
 import java.sql.{Connection, DriverManager, ResultSet, SQLException, Statement}
 import java.util.Properties
 
 import com.akamai.nse.siphocore.connectors.flink.source.JdbcSource
+import com.akamai.nse.siphocore.exception.{SiphoException, SiphoFileException, SiphoSqlException}
 import org.apache.flink.api.scala.{DataSet, GroupedDataSet}
 import org.apache.flink.types.Row
 import org.slf4j.LoggerFactory
@@ -25,11 +27,9 @@ class JdbcCustomLoad(username: String, password: String, driver: String, dbURL: 
   @BeanProperty var retry: Int = 3
   @BeanProperty var chunk: Int = 50
 
-  //properties need to be fixed
 
   private lazy val logger = LoggerFactory.getLogger(this.getClass)
 
-  //logger.info(s" keystore $keyStore and $keyStoreType and $username")
 
   var listMap: ListMap[String, String] = ListMap.empty
   var connection: Connection = null
@@ -40,6 +40,8 @@ class JdbcCustomLoad(username: String, password: String, driver: String, dbURL: 
       e.printStackTrace()
 
   }
+
+
   val props = new Properties
   props.setProperty("user", username)
   props.setProperty("password", password)
@@ -47,34 +49,34 @@ class JdbcCustomLoad(username: String, password: String, driver: String, dbURL: 
   connection = DriverManager.getConnection(dbURL,props)
   val stmt = connection.createStatement()
 
-  def buildQuery(fileName: String, field: String): String = {
+  def buildQuery(fileName: String, field: String) = {
 
-
-    val file = Source.fromFile(fileName)
-    val qry =  file.mkString.replaceAllLiterally(s"{process_id}", field).replaceAllLiterally("{retry_num}", retry.toString).replaceAllLiterally("{max_chunk_num}", chunk.toString)
-    logger.debug("Query to Execute: "+qry)
+    var qry = ""
+    try {
+      val file = Source.fromFile(fileName)
+      qry = file.mkString.replaceAllLiterally(s"{process_id}", field).replaceAllLiterally("{retry_num}", retry.toString).replaceAllLiterally("{max_chunk_num}", chunk.toString)
+    }catch {
+      case ex:FileNotFoundException =>
+        throw SiphoFileException(ex.getMessage,this.getClass().getName,"buildQuery",fileName,58)
+    }
     qry
-}
-
-//source.close, filename exception
+  }
 
   override def truncate(): ListMap[String,String] = {
 
     val sql = buildQuery(file,"key")
     val sqlArr = sql.split(";")
-    for (sql <- sqlArr) {
-      try{
-      stmt.executeQuery(sql)
-      logger.debug(s" Truncating Stage Table Successful :$sql")
-      listMap += (field -> "success")}
-      catch {
+    try {
+      for (sql <- sqlArr) {
+        stmt.executeQuery(sql)
+        logger.debug(s" Truncating Stage Table Successful :$sql")
+      }
+      listMap += (field -> "success")
+    }catch {
         case e: SQLException =>
           logger.error(s"Could not execute query ${e.getMessage}")
-          listMap += (field -> "failure")
-          throw new RuntimeException(e)
+          listMap += (field -> "fail")
       }
-    }
-
     listMap
   }
 
@@ -83,64 +85,53 @@ class JdbcCustomLoad(username: String, password: String, driver: String, dbURL: 
     var list = new mutable.MutableList[String]()
     try{
     val rs = stmt.executeQuery(sql)
-    logger.debug(s" ${field} Query Executed! ")
-
+    logger.debug(s" Query ${field} Executed! ")
     while (rs.next()) {
       val queue = rs.getString(field)
       list += queue
-      logger.debug(field +":" + queue)
+      logger.debug(field +":" + queue +"-"+ list.mkString(","))
     }
       listMap += (field -> list.mkString(","))
     }catch {
       case e: SQLException =>
         logger.error(s"Could not execute query ${e.getMessage}")
-        listMap += (field -> "failed")
-        throw new RuntimeException(e)
+        listMap += (field -> "fail")
     }
-
     listMap
   }
 
   override def filter(key:String): ListMap[String,String] = {
     val sql = buildQuery(file,key)
-
     var list = new mutable.MutableList[String]()
     try {
       val rs = stmt.executeQuery(sql)
       logger.debug(s"  ${field}  Query Executed! ")
-
       val fields = field.split(",")
       logger.debug(" fields " + fields.foreach(println))
-
       while (rs.next()) {
         if (fields.size > 1) {
           for (col <- fields) {
             val queue = rs.getString(col)
-            //list += queue
             logger.debug(" queue " + rs.getDate(col))
             listMap += (col -> queue)
           }
         } else {
           val queue = rs.getString(field)
           list += queue
-          logger.debug(" list " + list)
         }
       }
+      logger.debug("Field "+list+"  "+list.mkString(","))
       listMap += (field -> list.mkString(","))
     }catch {
       case e: SQLException =>
         logger.error(s"Could not execute query ${e.getMessage}")
-        listMap += (field -> "failed")
-        throw new RuntimeException(e)
+        listMap += (field -> "fail")
     }
-
     listMap
   }
 
-  //
 
   override def insert(key:String): ListMap[String,String] = {
-
     val sql = buildQuery(file,key)
     try {
       connection.prepareCall(sql).execute()
@@ -149,8 +140,7 @@ class JdbcCustomLoad(username: String, password: String, driver: String, dbURL: 
     }catch{
       case e: SQLException =>
         logger.error(s"Could not execute query ${e.getMessage}")
-        listMap += (field -> "failed")
-        throw new RuntimeException(e)
+        listMap += (field -> "fail")
     }
     listMap
   }
@@ -165,12 +155,9 @@ class JdbcCustomLoad(username: String, password: String, driver: String, dbURL: 
     catch {
       case e: SQLException =>
         logger.error(s"Could not execute query ${e.getMessage}")
-        listMap += (field -> "failed")
-        throw new RuntimeException(e)
+        listMap += (field -> "fail")
     }
-
     listMap
   }
-
 }
 

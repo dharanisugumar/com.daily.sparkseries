@@ -1,4 +1,4 @@
-package org.apache.flink.util
+package com.akamai.nse.siphocore.exception
 
 import org.apache.flink.annotation.Public
 
@@ -6,7 +6,7 @@ import org.apache.flink.annotation.Public
 /** Base class of all Flink-specific unchecked exceptions. */
 @Public
 @SerialVersionUID(193141189399279147L)
-class FlinkRuntimeException extends RuntimeException {
+class SiphoRuntimeException extends RuntimeException {
   /**
    * Creates a new Exception with the given message and null as the cause.
    * @param message The exception message
