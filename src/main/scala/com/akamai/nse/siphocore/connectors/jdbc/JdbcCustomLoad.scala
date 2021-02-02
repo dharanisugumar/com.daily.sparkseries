@@ -107,7 +107,7 @@ class JdbcCustomLoad(username: String, password: String, driver: String, dbURL: 
       val rs = stmt.executeQuery(sql)
       logger.debug(s"  ${field}  Query Executed! ")
       val fields = field.split(",")
-      logger.debug(" fields " + fields.foreach(println))
+      //logger.debug(" fields " + fields.foreach(println))
       while (rs.next()) {
         if (fields.size > 1) {
           for (col <- fields) {
