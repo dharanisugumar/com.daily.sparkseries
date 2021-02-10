@@ -5,7 +5,6 @@ import org.apache.flink.streaming.api.scala.StreamExecutionEnvironment
 import org.springframework.context.ApplicationContext
 
 trait FlinkExecutorTask extends Serializable {
-  def task(env: Either[StreamExecutionEnvironment, ExecutionEnvironment], args: Array[String])
+  def task(env: Either[StreamExecutionEnvironment, ExecutionEnvironment], args: Array[String],appContext: AppContext)
           (implicit ctx: ApplicationContext): FlinkExecutor
-
 }

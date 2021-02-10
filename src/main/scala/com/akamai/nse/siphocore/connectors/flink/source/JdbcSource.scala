@@ -33,7 +33,7 @@ class JdbcSource(dataSource: BasicDataSource, sql: String,queryParameters:Array[
   @BeanProperty var fetchSize: Int = FETCH_SIZE
   //@BeanProperty var queryParameters: Array[Array[Serializable]] = _
 
-  logger.info("queryParameters "+queryParameters.length)
+  //logger.info("queryParameters "+queryParameters.length)
 
   val paramProvider = new GenericParameterValuesProvider(queryParameters)
 

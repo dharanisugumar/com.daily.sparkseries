@@ -1,6 +1,6 @@
 package com.akamai.nse.siphocore.connectors.jdbc
 
-abstract class TableDraft(val databaseName: String) {
+abstract class TableWrapper(val databaseName: String) {
 
   type T_SqlType <: SqlQuery
   val logicalName: String

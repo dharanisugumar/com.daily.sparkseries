@@ -1,6 +1,7 @@
 package com.akamai.nse.siphocore.exception
 
 import java.io.FileNotFoundException
+import java.sql.SQLException
 
 import com.akamai.nse.siphocore.common.JsonUtil
 
@@ -64,5 +65,22 @@ case class SiphoKeyNotFoundException(message: String,className:String,methodName
   throw new Exception() with SiphoCustomException {
 
     override val getMessage = JsonUtil.toJson(ExceptionMessage(message, className, methodName, lineNumber))
+  }
+}
+
+case class SiphoClassNotFoundException(message: String,className:String,methodName:String,fileName:String,lineNumber:Int) extends Exception with SiphoCustomException {
+
+  throw new ClassNotFoundException() with SiphoCustomException {
+
+    override val getMessage = JsonUtil.toJson(ExceptionFileMessage(message, className, methodName, fileName, lineNumber))
+  }
+
+}
+
+case class SiphoSQLException(message: String,className:String,methodName:String,fileName:String,lineNumber:Int) extends Exception with SiphoCustomException {
+
+  throw new SQLException() with SiphoCustomException {
+
+    override val getMessage = JsonUtil.toJson(ExceptionFileMessage(message, className, methodName, fileName, lineNumber))
   }
 }

@@ -1,21 +1,20 @@
 package com.akamai.nse.siphocore.connectors.jdbc
 
 import java.io.FileNotFoundException
-import java.sql.{Connection, DriverManager, ResultSet, SQLException, Statement}
+import java.sql.{Connection, DriverManager, SQLException}
 import java.util.Properties
+import java.sql.Types
 
-import com.akamai.nse.siphocore.connectors.flink.source.JdbcSource
-import com.akamai.nse.siphocore.exception.{SiphoException, SiphoFileException, SiphoSqlException}
-import org.apache.flink.api.scala.{DataSet, GroupedDataSet}
-import org.apache.flink.types.Row
+import com.akamai.nse.siphocore.common.{TaskStageEnum, TaskStatusEnum}
+import com.akamai.nse.siphocore.exception.{SiphoClassNotFoundException, SiphoFileException, SiphoSQLException, SiphoSqlException}
+import com.akamai.nse.siphocore.logger.{EventTypeEnum, LogLevelEnum, LogMessage}
 import org.slf4j.LoggerFactory
-import org.springframework.beans.factory.annotation.{Autowired, Required, Value}
+import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Component
 
 import scala.beans.BeanProperty
-import scala.collection.{immutable, mutable}
+import scala.collection.mutable
 import scala.collection.immutable.ListMap
-import scala.collection.mutable.{ListBuffer, MutableList}
 import scala.io.Source
 
 
@@ -28,6 +27,8 @@ class JdbcCustomLoad(username: String, password: String, driver: String, dbURL: 
   @BeanProperty var chunk: Int = 50
 
 
+  appContext.jobLogger.eventLog(LogLevelEnum.DEBUG, appContext.job, LogMessage(appContext.logIdentifier, " ", EventTypeEnum.TASK, TaskStageEnum.PreProcessor, "JDBC custom connection ", TaskStatusEnum.STARTED, "", ""))
+
   private lazy val logger = LoggerFactory.getLogger(this.getClass)
 
 
@@ -36,9 +37,8 @@ class JdbcCustomLoad(username: String, password: String, driver: String, dbURL: 
   try Class.forName("oracle.jdbc.driver.OracleDriver")
   catch {
     case e: ClassNotFoundException =>
-      System.out.println("Where is your Oracle JDBC Driver?") //to be changed to logger
-      e.printStackTrace()
-
+        appContext.jobLogger.eventLog(LogLevelEnum.ERROR, appContext.job, LogMessage(appContext.logIdentifier, " ", EventTypeEnum.TASK, TaskStageEnum.PreProcessor, "Where is your Oracle JDBC Driver?", TaskStatusEnum.FAILED, "", ""))
+        SiphoClassNotFoundException(e.getMessage,this.getClass().getName,"connection","",111)
   }
 
 
@@ -47,9 +47,11 @@ class JdbcCustomLoad(username: String, password: String, driver: String, dbURL: 
   props.setProperty("password", password)
 
   connection = DriverManager.getConnection(dbURL,props)
-  val stmt = connection.createStatement()
+  var stmt = connection.createStatement()
 
   def buildQuery(fileName: String, field: String) = {
+
+    appContext.jobLogger.eventLog(LogLevelEnum.DEBUG, appContext.job, LogMessage(appContext.logIdentifier, " ", EventTypeEnum.TASK, TaskStageEnum.PreProcessor, "preparing jdbc statement query ", TaskStatusEnum.STARTED, "", ""))
 
     var qry = ""
     try {
@@ -59,42 +61,49 @@ class JdbcCustomLoad(username: String, password: String, driver: String, dbURL: 
       case ex:FileNotFoundException =>
         throw SiphoFileException(ex.getMessage,this.getClass().getName,"buildQuery",fileName,58)
     }
+    appContext.jobLogger.eventLog(LogLevelEnum.DEBUG, appContext.job, LogMessage(appContext.logIdentifier, " ", EventTypeEnum.TASK, TaskStageEnum.PreProcessor, "preparing jdbc statement query ", TaskStatusEnum.FINISHED, "", ""))
+
     qry
   }
 
   override def truncate(): ListMap[String,String] = {
+
+    appContext.jobLogger.eventLog(LogLevelEnum.DEBUG, appContext.job, LogMessage(appContext.logIdentifier, " ", EventTypeEnum.TASK, TaskStageEnum.PreProcessor, "Truncating tables  ", TaskStatusEnum.STARTED, "", ""))
 
     val sql = buildQuery(file,"key")
     val sqlArr = sql.split(";")
     try {
       for (sql <- sqlArr) {
         stmt.executeQuery(sql)
-        logger.debug(s" Truncating Stage Table Successful :$sql")
+        appContext.jobLogger.eventLog(LogLevelEnum.DEBUG, appContext.job, LogMessage(appContext.logIdentifier, " ", EventTypeEnum.TASK, TaskStageEnum.PreProcessor, s"Truncating tables  $sql", TaskStatusEnum.FINISHED, "", ""))
       }
       listMap += (field -> "success")
     }catch {
         case e: SQLException =>
-          logger.error(s"Could not execute query ${e.getMessage}")
+          SiphoSQLException(e.getMessage,this.getClass().getName,"truncate",file,58)
+          appContext.jobLogger.eventLog(LogLevelEnum.ERROR, appContext.job, LogMessage(appContext.logIdentifier, " ", EventTypeEnum.TASK, TaskStageEnum.PreProcessor, s"Could not execute query ${e.getMessage}", TaskStatusEnum.FAILED, "", ""))
           listMap += (field -> "fail")
       }
     listMap
   }
 
   override def select(): ListMap[String,String] = {
+
     val sql = buildQuery(file,"")
     var list = new mutable.MutableList[String]()
     try{
     val rs = stmt.executeQuery(sql)
-    logger.debug(s" Query ${field} Executed! ")
-    while (rs.next()) {
+      appContext.jobLogger.eventLog(LogLevelEnum.DEBUG, appContext.job, LogMessage(appContext.logIdentifier, " ", EventTypeEnum.TASK, TaskStageEnum.PreProcessor, s"Query ${field} Executed!  ", TaskStatusEnum.INPROGRESS, "", ""))
+      while (rs.next()) {
       val queue = rs.getString(field)
       list += queue
-      logger.debug(field +":" + queue +"-"+ list.mkString(","))
+        appContext.jobLogger.eventLog(LogLevelEnum.DEBUG, appContext.job, LogMessage(appContext.logIdentifier, " ", EventTypeEnum.TASK, TaskStageEnum.PreProcessor, s"field : $queue  - ${list.mkString(",")} ", TaskStatusEnum.INPROGRESS, "", ""))
     }
       listMap += (field -> list.mkString(","))
     }catch {
       case e: SQLException =>
-        logger.error(s"Could not execute query ${e.getMessage}")
+        SiphoSQLException(e.getMessage,this.getClass().getName,"select",file,58)
+        appContext.jobLogger.eventLog(LogLevelEnum.ERROR, appContext.job, LogMessage(appContext.logIdentifier, " ", EventTypeEnum.TASK, TaskStageEnum.PreProcessor, s"Could not execute query ${e.getMessage}", TaskStatusEnum.FAILED, "", ""))
         listMap += (field -> "fail")
     }
     listMap
@@ -105,14 +114,13 @@ class JdbcCustomLoad(username: String, password: String, driver: String, dbURL: 
     var list = new mutable.MutableList[String]()
     try {
       val rs = stmt.executeQuery(sql)
-      logger.debug(s"  ${field}  Query Executed! ")
+      appContext.jobLogger.eventLog(LogLevelEnum.DEBUG, appContext.job, LogMessage(appContext.logIdentifier, " ", EventTypeEnum.TASK, TaskStageEnum.PreProcessor, s"Query ${field} Executed!  ", TaskStatusEnum.INPROGRESS, "", ""))
       val fields = field.split(",")
-      //logger.debug(" fields " + fields.foreach(println))
       while (rs.next()) {
         if (fields.size > 1) {
           for (col <- fields) {
             val queue = rs.getString(col)
-            logger.debug(" queue " + rs.getDate(col))
+            appContext.jobLogger.eventLog(LogLevelEnum.DEBUG, appContext.job, LogMessage(appContext.logIdentifier, " ", EventTypeEnum.TASK, TaskStageEnum.PreProcessor, s"queue   ${rs.getDate(col)}  ", TaskStatusEnum.INPROGRESS, "", ""))
             listMap += (col -> queue)
           }
         } else {
@@ -120,11 +128,12 @@ class JdbcCustomLoad(username: String, password: String, driver: String, dbURL: 
           list += queue
         }
       }
-      logger.debug("Field "+list+"  "+list.mkString(","))
+      appContext.jobLogger.eventLog(LogLevelEnum.DEBUG, appContext.job, LogMessage(appContext.logIdentifier, " ", EventTypeEnum.TASK, TaskStageEnum.PreProcessor, s"field : $field  - ${list.mkString(",")} ", TaskStatusEnum.INPROGRESS, "", ""))
       listMap += (field -> list.mkString(","))
     }catch {
       case e: SQLException =>
-        logger.error(s"Could not execute query ${e.getMessage}")
+        SiphoSQLException(e.getMessage,this.getClass().getName,"filter",file,58)
+        appContext.jobLogger.eventLog(LogLevelEnum.ERROR, appContext.job, LogMessage(appContext.logIdentifier, " ", EventTypeEnum.TASK, TaskStageEnum.PreProcessor, s"Could not execute query ${e.getMessage}", TaskStatusEnum.FAILED, "", ""))
         listMap += (field -> "fail")
     }
     listMap
@@ -133,13 +142,20 @@ class JdbcCustomLoad(username: String, password: String, driver: String, dbURL: 
 
   override def insert(key:String): ListMap[String,String] = {
     val sql = buildQuery(file,key)
+    appContext.jobLogger.eventLog(LogLevelEnum.DEBUG, appContext.job, LogMessage(appContext.logIdentifier, " ", EventTypeEnum.TASK, TaskStageEnum.PreProcessor, s"query - $sql ", TaskStatusEnum.INPROGRESS, "", ""))
     try {
-      connection.prepareCall(sql).execute()
+      appContext.jobLogger.eventLog(LogLevelEnum.INFO, appContext.job, LogMessage(appContext.logIdentifier, " ", EventTypeEnum.TASK, TaskStageEnum.PreProcessor, s"Executing Stored Procedure  ", TaskStatusEnum.STARTED, "", ""))
+      val statement = connection.prepareCall(sql)
+      statement.setInt(1,key.toInt)
+      statement.registerOutParameter(2, Types.VARCHAR)
+      statement.execute()
+      val outParam = statement.getString(2)
+      appContext.jobLogger.eventLog(LogLevelEnum.INFO, appContext.job, LogMessage(appContext.logIdentifier, " ", EventTypeEnum.TASK, TaskStageEnum.PreProcessor, s"Query ${field} Executed! and output parameter : ${outParam} ", TaskStatusEnum.FINISHED, "", ""))
       listMap += (field -> "success")
-      logger.debug(s" EXECUTED ${field} SQL: ${"success"}")
     }catch{
       case e: SQLException =>
-        logger.error(s"Could not execute query ${e.getMessage}")
+        SiphoSQLException(e.getMessage,this.getClass().getName,"insert",file,58)
+        appContext.jobLogger.eventLog(LogLevelEnum.ERROR, appContext.job, LogMessage(appContext.logIdentifier, " ", EventTypeEnum.TASK, TaskStageEnum.PreProcessor, s"Could not execute query ${e.getMessage}", TaskStatusEnum.FAILED, "", ""))
         listMap += (field -> "fail")
     }
     listMap
@@ -150,11 +166,12 @@ class JdbcCustomLoad(username: String, password: String, driver: String, dbURL: 
     try{
     stmt.executeUpdate(sql)
       listMap += (field -> "success")
-      logger.debug(s" EXECUTED ${field} SQL: ${"success"}")
+      appContext.jobLogger.eventLog(LogLevelEnum.DEBUG, appContext.job, LogMessage(appContext.logIdentifier, " ", EventTypeEnum.TASK, TaskStageEnum.PreProcessor, s"Query ${field} Executed!  ", TaskStatusEnum.FINISHED, "", ""))
     }
     catch {
       case e: SQLException =>
-        logger.error(s"Could not execute query ${e.getMessage}")
+        SiphoSQLException(e.getMessage,this.getClass().getName,"update",file,58)
+        appContext.jobLogger.eventLog(LogLevelEnum.ERROR, appContext.job, LogMessage(appContext.logIdentifier, " ", EventTypeEnum.TASK, TaskStageEnum.PreProcessor, s"Could not execute query ${e.getMessage}", TaskStatusEnum.FAILED, "", ""))
         listMap += (field -> "fail")
     }
     listMap
