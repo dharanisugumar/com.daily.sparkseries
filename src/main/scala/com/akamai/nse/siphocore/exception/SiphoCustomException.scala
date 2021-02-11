@@ -45,7 +45,7 @@ case class SiphoRunTimeException(message: String,className:String,methodName:Str
 
 case class SiphoSqlException(message: String,className:String,methodName:String,lineNumber:Int) extends Exception with SiphoCustomException {
 
-  throw new Exception() with SiphoCustomException {
+  throw new SQLException() with SiphoCustomException {
 
     override val getMessage = JsonUtil.toJson(ExceptionMessage(message, className, methodName, lineNumber))
   }
@@ -53,7 +53,7 @@ case class SiphoSqlException(message: String,className:String,methodName:String,
 
 case class SiphoNullPointerException(message: String,className:String,methodName:String,lineNumber:Int) extends Exception with SiphoCustomException {
 
-  throw new Exception() with SiphoCustomException {
+  throw new NullPointerException() with SiphoCustomException {
 
     override val getMessage = JsonUtil.toJson(ExceptionMessage(message, className, methodName, lineNumber))
   }
@@ -75,12 +75,4 @@ case class SiphoClassNotFoundException(message: String,className:String,methodNa
     override val getMessage = JsonUtil.toJson(ExceptionFileMessage(message, className, methodName, fileName, lineNumber))
   }
 
-}
-
-case class SiphoSQLException(message: String,className:String,methodName:String,fileName:String,lineNumber:Int) extends Exception with SiphoCustomException {
-
-  throw new SQLException() with SiphoCustomException {
-
-    override val getMessage = JsonUtil.toJson(ExceptionFileMessage(message, className, methodName, fileName, lineNumber))
-  }
 }
