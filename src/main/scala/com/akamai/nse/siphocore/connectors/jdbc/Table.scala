@@ -2,9 +2,11 @@ package com.akamai.nse.siphocore.connectors.jdbc
 
 import java.sql.SQLException
 
+import com.akamai.nse.siphocore.common.service.AbstractServiceTrait
+
 import scala.collection.immutable.ListMap
 
-trait Table extends Serializable {
+trait Table extends AbstractServiceTrait with Serializable {
 
   @throws(classOf[SQLException])
   def truncate: ListMap[String,String]

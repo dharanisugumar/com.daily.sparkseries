@@ -107,20 +107,6 @@ trait LoggerTrait {
     def warn(msg: String):Unit ={
         logger.warn(msg)
     }
-
-//    def module(m:String) = {
-//        if(!m.isEmpty){
-//            this.eventAttrs += ("module"->m)
-//        }
-//    }
-//
-//    def debug(msg:String,throwable: Throwable):Unit ={
-//        this.eventAttrs ++=  Map(eventDescription -> msg.trim.replace("\\","\\\\"))
-//        this.debug(eventAttrs,throwable)
-//    }
-
-
-
 }
 
 sealed trait EventAttribute{
