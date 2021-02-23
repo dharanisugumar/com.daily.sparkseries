@@ -38,7 +38,7 @@ class JdbcCustomLoad(username: String, password: String, driver: String, dbURL: 
   catch {
     case e: ClassNotFoundException =>
         appContext.jobLogger.eventLog(LogLevelEnum.ERROR, appContext.job, LogMessage(appContext.logIdentifier, " ", EventTypeEnum.TASK, TaskStageEnum.PreProcessor, "Where is your Oracle JDBC Driver?", TaskStatusEnum.FAILED, "", ""))
-        SiphoClassNotFoundException(e.getMessage,this.getClass().getName,"connection","",111)
+        SiphoClassNotFoundException(e.getMessage,this.getClass().getName,"connection","")
   }
 
 
@@ -59,7 +59,7 @@ class JdbcCustomLoad(username: String, password: String, driver: String, dbURL: 
       qry = file.mkString.replaceAllLiterally(s"{process_id}", field).replaceAllLiterally("{retry_num}", retry.toString).replaceAllLiterally("{max_chunk_num}", chunk.toString)
     }catch {
       case ex:FileNotFoundException =>
-        throw SiphoFileException(ex.getMessage,this.getClass().getName,"buildQuery",fileName,58)
+        throw SiphoFileException(ex.getMessage,this.getClass().getName,"buildQuery",fileName)
     }
     appContext.jobLogger.eventLog(LogLevelEnum.DEBUG, appContext.job, LogMessage(appContext.logIdentifier, " ", EventTypeEnum.TASK, TaskStageEnum.PreProcessor, "preparing jdbc statement query ", TaskStatusEnum.FINISHED, "", ""))
 
@@ -80,7 +80,7 @@ class JdbcCustomLoad(username: String, password: String, driver: String, dbURL: 
       listMap += (field -> "success")
     }catch {
         case e: SQLException =>
-          SiphoSqlException(e.getMessage,this.getClass().getName,"truncate",58)
+          SiphoSqlException(e.getMessage,this.getClass().getName,"truncate")
           appContext.jobLogger.eventLog(LogLevelEnum.ERROR, appContext.job, LogMessage(appContext.logIdentifier, " ", EventTypeEnum.TASK, TaskStageEnum.PreProcessor, s"Could not execute query ${e.getMessage}", TaskStatusEnum.FAILED, "", ""))
           listMap += (field -> "fail")
       }
@@ -102,7 +102,7 @@ class JdbcCustomLoad(username: String, password: String, driver: String, dbURL: 
       listMap += (field -> list.mkString(","))
     }catch {
       case e: SQLException =>
-        SiphoSqlException(e.getMessage,this.getClass().getName,"select",58)
+        SiphoSqlException(e.getMessage,this.getClass().getName,"select")
         appContext.jobLogger.eventLog(LogLevelEnum.ERROR, appContext.job, LogMessage(appContext.logIdentifier, " ", EventTypeEnum.TASK, TaskStageEnum.PreProcessor, s"Could not execute query ${e.getMessage}", TaskStatusEnum.FAILED, "", ""))
         listMap += (field -> "fail")
     }
@@ -132,7 +132,7 @@ class JdbcCustomLoad(username: String, password: String, driver: String, dbURL: 
       listMap += (field -> list.mkString(","))
     }catch {
       case e: SQLException =>
-        SiphoSqlException(e.getMessage,this.getClass().getName,"filter",58)
+        SiphoSqlException(e.getMessage,this.getClass().getName,"filter")
         appContext.jobLogger.eventLog(LogLevelEnum.ERROR, appContext.job, LogMessage(appContext.logIdentifier, " ", EventTypeEnum.TASK, TaskStageEnum.PreProcessor, s"Could not execute query ${e.getMessage}", TaskStatusEnum.FAILED, "", ""))
         listMap += (field -> "fail")
     }
@@ -154,7 +154,7 @@ class JdbcCustomLoad(username: String, password: String, driver: String, dbURL: 
       listMap += (field -> "success")
     }catch{
       case e: SQLException =>
-        SiphoSqlException(e.getMessage,this.getClass().getName,"insert",58)
+        SiphoSqlException(e.getMessage,this.getClass().getName,"insert")
         appContext.jobLogger.eventLog(LogLevelEnum.ERROR, appContext.job, LogMessage(appContext.logIdentifier, " ", EventTypeEnum.TASK, TaskStageEnum.PreProcessor, s"Could not execute query ${e.getMessage}", TaskStatusEnum.FAILED, "", ""))
         listMap += (field -> "fail")
     }
@@ -170,7 +170,7 @@ class JdbcCustomLoad(username: String, password: String, driver: String, dbURL: 
     }
     catch {
       case e: SQLException =>
-        SiphoSqlException(e.getMessage,this.getClass().getName,"update",58)
+        SiphoSqlException(e.getMessage,this.getClass().getName,"update")
         appContext.jobLogger.eventLog(LogLevelEnum.ERROR, appContext.job, LogMessage(appContext.logIdentifier, " ", EventTypeEnum.TASK, TaskStageEnum.PreProcessor, s"Could not execute query ${e.getMessage}", TaskStatusEnum.FAILED, "", ""))
         listMap += (field -> "fail")
     }
