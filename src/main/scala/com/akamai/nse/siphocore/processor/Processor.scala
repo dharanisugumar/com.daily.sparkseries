@@ -125,7 +125,7 @@ object Processor extends AbstractServiceTrait{
         }
     }
     appContext.jobLogger.eventLog(LogLevelEnum.INFO, appContext.job, LogMessage(appContext.logIdentifier, " ", EventTypeEnum.TASK, TaskStageEnum.Transformation, "Get values from Configuration File", TaskStatusEnum.FINISHED, "", ""))
-    //logger.info("file content: " + outFile)
+    appContext.jobLogger.eventLog(LogLevelEnum.INFO, appContext.job, LogMessage(appContext.logIdentifier, " ", EventTypeEnum.TASK, TaskStageEnum.Transformation, s"outFile : ${outFile}", TaskStatusEnum.FINISHED, "", ""))
     outFile
   }
 
