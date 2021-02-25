@@ -23,7 +23,7 @@ case class Processor(cache:Map[String,String]) extends Serializable {
       keys.find(lookupEntry.endsWith).flatMap(cache.get)
     } catch {
       case e: Exception =>
-        throw SiphoKeyNotFoundException(e.getMessage, this.getClass.getName, "lookup", 22)
+        throw SiphoKeyNotFoundException(e.getMessage, this.getClass.getName, "lookup")
     }
   }
 
@@ -51,7 +51,7 @@ object Processor extends AbstractServiceTrait{
     }catch{
       case ex:FileNotFoundException =>
         appContext.jobLogger.eventLog(LogLevelEnum.INFO, appContext.job, LogMessage(appContext.logIdentifier, " ", EventTypeEnum.TASK, TaskStageEnum.PreProcessor, "Create Configuration file", TaskStatusEnum.FAILED, "", ""))
-        SiphoFileException(ex.getMessage,this.getClass().getName,"writeFile","",111)
+        SiphoFileException(ex.getMessage,this.getClass().getName,"writeFile","")
     }
   }
 
@@ -73,7 +73,7 @@ object Processor extends AbstractServiceTrait{
     }catch{
       case x:FileNotFoundException =>
         appContext.jobLogger.eventLog(LogLevelEnum.INFO, appContext.job, LogMessage(appContext.logIdentifier, " ", EventTypeEnum.TASK, TaskStageEnum.Transformation, "Reading properties file", TaskStatusEnum.FAILED, "", ""))
-        throw SiphoFileException(x.getMessage,this.getClass().getName,"buildQuery",propsFile,87)
+        throw SiphoFileException(x.getMessage,this.getClass().getName,"buildQuery",propsFile)
     }
     appContext.jobLogger.eventLog(LogLevelEnum.INFO, appContext.job, LogMessage(appContext.logIdentifier, " ", EventTypeEnum.TASK, TaskStageEnum.Transformation, "Reading properties file", TaskStatusEnum.FINISHED, "", ""))
     new Processor(cache)
@@ -110,7 +110,7 @@ object Processor extends AbstractServiceTrait{
     }catch {
       case ex:FileNotFoundException =>
         appContext.jobLogger.eventLog(LogLevelEnum.INFO, appContext.job, LogMessage(appContext.logIdentifier, " ", EventTypeEnum.TASK, TaskStageEnum.Transformation, "Creating the stats sql", TaskStatusEnum.FAILED, "", ""))
-        throw SiphoFileException(ex.getMessage,this.getClass().getName,"buildQuery",fileName,87)
+        throw SiphoFileException(ex.getMessage,this.getClass().getName,"buildQuery",fileName)
     }
     appContext.jobLogger.eventLog(LogLevelEnum.INFO, appContext.job, LogMessage(appContext.logIdentifier, " ", EventTypeEnum.TASK, TaskStageEnum.Transformation, "Creating the stats sql", TaskStatusEnum.FINISHED, "", ""))
     outFile = keyValueMap.foldLeft(str) {
@@ -121,11 +121,11 @@ object Processor extends AbstractServiceTrait{
         }catch{
           case x: Exception =>
             appContext.jobLogger.eventLog(LogLevelEnum.INFO, appContext.job, LogMessage(appContext.logIdentifier, " ", EventTypeEnum.TASK, TaskStageEnum.Transformation, "Get values from Configuration File", TaskStatusEnum.FAILED, "", ""))
-            throw SiphoKeyNotFoundException(s" Key Not Found $from",this.getClass.getName,"buildQuery",97)
+            throw SiphoKeyNotFoundException(s" Key Not Found $from",this.getClass.getName,"buildQuery")
         }
     }
     appContext.jobLogger.eventLog(LogLevelEnum.INFO, appContext.job, LogMessage(appContext.logIdentifier, " ", EventTypeEnum.TASK, TaskStageEnum.Transformation, "Get values from Configuration File", TaskStatusEnum.FINISHED, "", ""))
-    //logger.info("file content: " + outFile)
+    appContext.jobLogger.eventLog(LogLevelEnum.INFO, appContext.job, LogMessage(appContext.logIdentifier, " ", EventTypeEnum.TASK, TaskStageEnum.Transformation, s"outFile : ${outFile}", TaskStatusEnum.FINISHED, "", ""))
     outFile
   }
 
@@ -139,7 +139,7 @@ object Processor extends AbstractServiceTrait{
     }catch {
       case ex:FileNotFoundException =>
         appContext.jobLogger.eventLog(LogLevelEnum.INFO, appContext.job, LogMessage(appContext.logIdentifier, " ", EventTypeEnum.TASK, TaskStageEnum.Transformation, "Reading properties file", TaskStatusEnum.FAILED, "", ""))
-        throw SiphoFileException(ex.getMessage,this.getClass().getName,"buildQuery",fileName,87)
+        throw SiphoFileException(ex.getMessage,this.getClass().getName,"buildQuery",fileName)
     }
     appContext.jobLogger.eventLog(LogLevelEnum.INFO, appContext.job, LogMessage(appContext.logIdentifier, " ", EventTypeEnum.TASK, TaskStageEnum.Transformation, "Reading properties file", TaskStatusEnum.FINISHED, "", ""))
     str
