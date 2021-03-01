@@ -6,4 +6,4 @@ git status
 Build/Package
 # Maven Install Sipho Core Application
 cd sipho-core/siphocore
-mvn install
+mvn clean install
