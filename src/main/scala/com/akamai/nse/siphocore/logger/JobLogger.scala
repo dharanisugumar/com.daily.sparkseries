@@ -1,11 +1,14 @@
 package com.akamai.nse.siphocore.logger
 
-import java.util.UUID
-
 import com.akamai.nse.siphocore.common.{Job, TimestampConverter}
 import com.akamai.nse.siphocore.logger.LogLevelEnum.LogLevel
 import org.apache.commons.lang3.exception.ExceptionUtils
 import org.slf4j.Logger
+
+/** Package for JobLogger
+ * @author  : Raju Gurumurthy
+ * @version : 1.0
+ */
 
 class JobLogger(logger:Logger) extends LoggerTrait with Serializable {
 

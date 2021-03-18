@@ -4,19 +4,20 @@ import java.io.FileNotFoundException
 import java.sql.{Connection, DriverManager, SQLException}
 import java.util.Properties
 import java.sql.Types
-
 import com.akamai.nse.siphocore.common.{TaskStageEnum, TaskStatusEnum}
 import com.akamai.nse.siphocore.exception.{SiphoClassNotFoundException, SiphoFileException, SiphoSqlException}
 import com.akamai.nse.siphocore.logger.{EventTypeEnum, LogLevelEnum, LogMessage}
-import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Component
-
 import scala.beans.BeanProperty
 import scala.collection.mutable
 import scala.collection.immutable.ListMap
 import scala.io.Source
 
+/** Package for JdbcCustomLoad
+ * @author  : Dharani Sugumar
+ * @version : 1.0
+ */
 
 @Component
 @Autowired
@@ -29,9 +30,6 @@ class JdbcCustomLoad(username: String, password: String, driver: String, dbURL: 
 
   appContext.jobLogger.eventLog(LogLevelEnum.DEBUG, appContext.job, LogMessage(appContext.logIdentifier, " ", EventTypeEnum.TASK, TaskStageEnum.PreProcessor, "JDBC custom connection ", TaskStatusEnum.STARTED, "", ""))
 
-  private lazy val logger = LoggerFactory.getLogger(this.getClass)
-
-
   var listMap: ListMap[String, String] = ListMap.empty
   var connection: Connection = null
   try Class.forName("oracle.jdbc.driver.OracleDriver")
@@ -41,14 +39,17 @@ class JdbcCustomLoad(username: String, password: String, driver: String, dbURL: 
         SiphoClassNotFoundException(e.getMessage,this.getClass().getName,"connection","")
   }
 
-
+  /* connecting to jdbc database
+  */
   val props = new Properties
   props.setProperty("user", username)
   props.setProperty("password", password)
+  props.setProperty("oracle.net.ssl_version","1.2")
 
   connection = DriverManager.getConnection(dbURL,props)
   var stmt = connection.createStatement()
 
+  /* this method :- buildQuery reads the file and replaces the parameter with the values */
   def buildQuery(fileName: String, field: String) = {
 
     appContext.jobLogger.eventLog(LogLevelEnum.DEBUG, appContext.job, LogMessage(appContext.logIdentifier, " ", EventTypeEnum.TASK, TaskStageEnum.PreProcessor, "preparing jdbc statement query ", TaskStatusEnum.STARTED, "", ""))
@@ -65,6 +66,7 @@ class JdbcCustomLoad(username: String, password: String, driver: String, dbURL: 
 
     qry
   }
+  /* this method :- truncate the records from the table */
 
   override def truncate(): ListMap[String,String] = {
 
@@ -87,6 +89,8 @@ class JdbcCustomLoad(username: String, password: String, driver: String, dbURL: 
     listMap
   }
 
+  /* this method :- select the particular field and store it in list */
+
   override def select(): ListMap[String,String] = {
 
     val sql = buildQuery(file,"")
@@ -108,6 +112,8 @@ class JdbcCustomLoad(username: String, password: String, driver: String, dbURL: 
     }
     listMap
   }
+
+  /* this method :- filter - fetches the records in a loop and update to the list */
 
   override def filter(key:String): ListMap[String,String] = {
     val sql = buildQuery(file,key)
@@ -139,6 +145,7 @@ class JdbcCustomLoad(username: String, password: String, driver: String, dbURL: 
     listMap
   }
 
+  /* this method :- insert - insert the records to the table */
 
   override def insert(key:String): ListMap[String,String] = {
     val sql = buildQuery(file,key)
@@ -160,6 +167,9 @@ class JdbcCustomLoad(username: String, password: String, driver: String, dbURL: 
     }
     listMap
   }
+
+  /* this method :- update the record to the table */
+
 
   override def update(key:String): ListMap[String,String] = {
     val sql = buildQuery(file,key)

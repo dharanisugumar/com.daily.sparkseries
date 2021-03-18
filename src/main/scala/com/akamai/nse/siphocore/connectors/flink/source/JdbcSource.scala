@@ -2,7 +2,6 @@ package com.akamai.nse.siphocore.connectors.flink.source
 
 import java.sql.ResultSet
 import java.io.Serializable
-
 import com.akamai.nse.siphocore.common.{TaskStageEnum, TaskStatusEnum}
 import com.akamai.nse.siphocore.connectors.BatchSourceConnector
 import com.akamai.nse.siphocore.logger.{EventTypeEnum, LogLevelEnum, LogMessage}
@@ -14,8 +13,12 @@ import org.apache.flink.api.java.io.jdbc.JDBCInputFormat
 import org.apache.flink.api.java.typeutils.RowTypeInfo
 import org.apache.flink.api.scala.{ExecutionEnvironment, _}
 import org.apache.flink.types.Row
-
 import scala.beans.BeanProperty
+
+/** Package for FileSink
+ * @author  : Dharani Sugumar
+ * @version : 1.0
+ */
 
 class JdbcSource(dataSource: BasicDataSource, sql: String,queryParameters:Array[Array[Serializable]]) extends BatchSourceConnector[Row] {
 
@@ -66,6 +69,9 @@ class JdbcSource(dataSource: BasicDataSource, sql: String,queryParameters:Array[
     .finish
 
   getInputFormat.openInputFormat()
+
+  /* this method fetches the data from the jdbc in batches.
+*/
 
   override def generate(env: ExecutionEnvironment): DataSet[Row] = {
     appContext.jobLogger.eventLog(LogLevelEnum.INFO, appContext.job, LogMessage(appContext.logIdentifier, " ", EventTypeEnum.TASK, TaskStageEnum.Transformation, " sink - jdbc", TaskStatusEnum.FINISHED, "", ""))

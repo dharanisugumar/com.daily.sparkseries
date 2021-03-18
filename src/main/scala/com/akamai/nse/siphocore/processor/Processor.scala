@@ -1,14 +1,18 @@
 package com.akamai.nse.siphocore.processor
 
 import java.io.{BufferedWriter, File, FileNotFoundException, FileWriter, Serializable}
-
 import com.akamai.nse.siphocore.common.service.AbstractServiceTrait
-import com.akamai.nse.siphocore.common.{AppContext, TaskStageEnum, TaskStatusEnum}
+import com.akamai.nse.siphocore.common.{TaskStageEnum, TaskStatusEnum}
 import com.akamai.nse.siphocore.exception.{SiphoFileException, SiphoKeyNotFoundException}
 import com.akamai.nse.siphocore.logger.{EventTypeEnum, LogLevelEnum, LogMessage}
 import scala.collection.immutable.ListMap
 import scala.collection.mutable
 import scala.io.Source
+
+/** Package for Processor
+ * @author  : Dharani Sugumar
+ * @version : 1.0
+ */
 
 case class Processor(cache:Map[String,String]) extends Serializable {
 
@@ -30,6 +34,8 @@ case class Processor(cache:Map[String,String]) extends Serializable {
 }
 
 object Processor extends AbstractServiceTrait{
+
+  /* this method :- writeFile - writes the content into the file */
 
   def writeFile(index:Map[String,String]) = {
 
@@ -54,6 +60,9 @@ object Processor extends AbstractServiceTrait{
         SiphoFileException(ex.getMessage,this.getClass().getName,"writeFile","")
     }
   }
+
+  /* this method :- loadFile - reads the file and stores it as a list of key value pairs and throws exception if the input
+  * file does not exist  */
 
   def loadFile(propsFile: String, fileDelimiter: String = "=") = {
     var cache: ListMap[String, String] = ListMap.empty
@@ -83,6 +92,11 @@ object Processor extends AbstractServiceTrait{
     val getJobId = loadFile(propsFile).lookup("job.id").getOrElse(1)
     getJobId.asInstanceOf[Int]
   }
+
+
+  /* this method :- getParamProvider - for the corresponding key that we pass it returns the value
+  * and stores it in the list. This has been given as a input for jdbc load for flink to read
+  * the data in chunks */
 
 
   def getParamProvider(processor: Processor,key:String): Array[Array[Serializable]] = {

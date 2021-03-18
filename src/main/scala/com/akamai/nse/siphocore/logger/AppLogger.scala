@@ -1,15 +1,17 @@
 package com.akamai.nse.siphocore.logger
 
 import java.util.UUID
-
 import com.akamai.nse.siphocore.common.TimestampConverter
-import com.typesafe.config.ConfigFactory
 import org.apache.commons.lang3.exception.ExceptionUtils
 import org.slf4j.{Logger, LoggerFactory}
 
+/** Package for AppLogger
+ * @author  : Dharani Sugumar
+ * @version : 1.0
+ */
+
 class AppLogger(logger:Logger) extends LoggerTrait {
 
-  //protected val logger: Logger = LoggerFactory.getLogger(getClass.getName)
   final val statusSuccess = "SUCCESS"
   final val statusFailure = "FAILURE"
   final val statusWarning = "WARNING"
@@ -64,19 +66,18 @@ class AppLogger(logger:Logger) extends LoggerTrait {
 
   }
 
-      def logMessage(logMessage: String, detailedInfo: String = ""): Boolean = {
+  def logMessage(logMessage: String, detailedInfo: String = ""): Boolean = {
         this.add((eventType, logMessage))
         this.add((eventTimestamp, getCurrentTimestamp))
         this.info(s"${detailedInfo}")
         true
-      }
-      def logError(e: Exception): Boolean = {
+  }
+
+  def logError(e: Exception): Boolean = {
         this.add((stackTrace, e.toString()))
         this.error(ExceptionUtils.getStackTrace(e))
         true
-      }
-
-
+  }
 }
 
 object AppLogger {

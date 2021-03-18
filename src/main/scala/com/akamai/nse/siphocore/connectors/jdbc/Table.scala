@@ -1,10 +1,13 @@
 package com.akamai.nse.siphocore.connectors.jdbc
 
 import java.sql.SQLException
-
 import com.akamai.nse.siphocore.common.service.AbstractServiceTrait
-
 import scala.collection.immutable.ListMap
+
+/** Package for Table
+ * @author  : Dharani Sugumar
+ * @version : 1.0
+ */
 
 trait Table extends AbstractServiceTrait with Serializable {
 

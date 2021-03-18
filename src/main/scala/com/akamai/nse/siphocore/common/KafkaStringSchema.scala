@@ -2,6 +2,14 @@ package com.akamai.nse.siphocore.common
 
 import org.apache.flink.api.common.serialization.{DeserializationSchema, SerializationSchema}
 
+/** Package for KafkaStringSchema
+ * @author  : Dharani
+ * @version : 1.0
+ */
+
+/**
+ * this object helps to takes the kafka input of type string and serialize, deserialize to bytes type.
+ */
 object KafkaStringSchema extends SerializationSchema[String] with DeserializationSchema[String] {
 
   import org.apache.flink.api.common.typeinfo.TypeInformation

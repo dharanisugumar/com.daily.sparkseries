@@ -38,7 +38,6 @@
         </dependency>
 
 
-
         <dependency>
             <groupId>org.apache.flink</groupId>
             <artifactId>flink-table-api-scala-bridge_${scala.major}</artifactId>
@@ -58,9 +57,9 @@
         </dependency>
 
        <dependency>
-                    <groupId>org.apache.flink</groupId>
-                    <artifactId>flink-jdbc_${scala.major}</artifactId>
-                    <version>${flink.version}</version>
+            <groupId>org.apache.flink</groupId>
+            <artifactId>flink-jdbc_${scala.major}</artifactId>
+            <version>${flink.version}</version>
        </dependency>
 
 
@@ -88,7 +87,6 @@
             <version>3.5.1</version>
         </dependency>
 
-
         <dependency>
             <groupId>com.fasterxml.jackson.core</groupId>
             <artifactId>jackson-databind</artifactId>
@@ -100,13 +98,6 @@
             <artifactId>jackson-module-scala_${scala.major}</artifactId>
             <version>2.9.9</version>
         </dependency>
-
-        <dependency>
-            <groupId>com.oracle</groupId>
-            <artifactId>ojdbc7</artifactId>
-            <version>12.1.0.2</version>
-        </dependency>
-
 
         <dependency>
             <groupId>org.rogach</groupId>

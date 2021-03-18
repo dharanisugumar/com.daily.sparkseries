@@ -2,6 +2,11 @@ package com.akamai.nse.siphocore.logger
 
 import org.slf4j.LoggerFactory
 
+/** Package for LoggerTrait
+ * @author  : Dharani Sugumar
+ * @version : 1.0
+ */
+
 trait LoggerTrait {
 
 
