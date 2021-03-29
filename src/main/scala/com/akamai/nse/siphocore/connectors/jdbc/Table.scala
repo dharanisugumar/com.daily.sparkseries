@@ -25,4 +25,7 @@ trait Table extends AbstractServiceTrait with Serializable {
 
   @throws(classOf[SQLException])
   def update(setValue:String):   ListMap[String,String]
+
+  @throws(classOf[SQLException])
+  def execute(setValue:String):   ListMap[String,String]
 }
