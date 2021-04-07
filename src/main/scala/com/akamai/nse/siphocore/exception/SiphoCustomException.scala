@@ -2,9 +2,12 @@ package com.akamai.nse.siphocore.exception
 
 import java.io.FileNotFoundException
 import java.sql.SQLException
-
 import com.akamai.nse.siphocore.common.JsonUtil
 
+/** Package for SiphoCustomException
+ * @author  : Dharani Sugumar
+ * @version : 1.0
+ */
 
 case class ExceptionMessage(message: String,className:String,methodName:String)
 case class ExceptionFileMessage(message: String,className:String,methodName:String,fileName:String)

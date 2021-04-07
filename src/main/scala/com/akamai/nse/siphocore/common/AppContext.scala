@@ -1,14 +1,13 @@
 package com.akamai.nse.siphocore.common
 
-import java.util.Properties
+/** Package for Appcontext
+ * @author  : Dharani
+ * @version : 1.0
+ */
 
-import com.akamai.nse.siphocore.exception.SiphoFileException
 import com.akamai.nse.siphocore.logger.JobLogger
 import com.typesafe.config.{Config, ConfigFactory}
 import org.slf4j.LoggerFactory
-
-import scala.io.Source
-
 
 case class AppContext(config: Config,jobLogger:JobLogger,job: Job,logIdentifier:String)
 
@@ -24,6 +23,9 @@ object AppContext extends AppContextTrait {
  */
 trait AppContextTrait {
 
+  /**
+   * This Appcontext mainly helps in customizing and to pick the values of the job id,name,desc,version,active status from the application.conf
+   */
 
   private lazy val logger = LoggerFactory.getLogger(this.getClass)
   val jobLogger: JobLogger = new JobLogger(logger)
@@ -35,11 +37,19 @@ trait AppContextTrait {
 
     lazy val config = getConfig()
 
+    /**
+     * Fetching values from application.conf
+     */
+
     val envJobId = config.getString("JOB_ID").trim
     val envJobName = config.getString("JOB_NAME").trim
     val envJobDesc = config.getString("JOB_DESC").trim
     val envJobVersion = config.getString("JOB_VERSION").trim
     val envJobActive = config.getString("JOB_ACTIVE")
+
+    /**
+     * calling the job constructor for the custom logger
+     */
 
     val job: Job = Job(envJobId, envJobName, envJobDesc, envJobVersion, envJobActive)
 

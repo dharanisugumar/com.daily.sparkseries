@@ -1,19 +1,23 @@
 package com.akamai.nse.siphocore.connectors.flink.sink
 
-import java.util.{Optional, Properties}
-
+import java.util.{Properties}
 import com.akamai.nse.siphocore.connectors.StreamSinkConnector
 import org.apache.flink.api.common.serialization.SimpleStringSchema
 import org.apache.flink.streaming.api.scala._
 import org.apache.flink.streaming.api.scala.DataStream
 import org.apache.flink.streaming.connectors.kafka.FlinkKafkaProducer
 import org.apache.flink.streaming.connectors.kafka.internals.KeyedSerializationSchemaWrapper
-import org.apache.flink.streaming.connectors.kafka.partitioner.FlinkFixedPartitioner
 import org.apache.kafka.clients.producer.ProducerConfig
 import org.apache.kafka.common.serialization.StringSerializer
 
+/** Package for KafkaSink
+ * @author  : Dharani Sugumar
+ * @version : 1.0
+ */
 class KafkaSink(bootstrapServers:String,topic:String) extends StreamSinkConnector[String]{
 
+  /* this method basically load the data into the kafka topic if kafka has been selected as the sink.
+ */
   val producerProperties = new Properties
   producerProperties.setProperty(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers)
   producerProperties.setProperty(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, classOf[StringSerializer].getName)
@@ -32,7 +36,6 @@ class KafkaSink(bootstrapServers:String,topic:String) extends StreamSinkConnecto
     new KeyedSerializationSchemaWrapper[String](new SimpleStringSchema),
     producerProperties
   )
-
 
   override def loader(env: StreamExecutionEnvironment,stream:DataStream[String]): Unit = stream.addSink(kafkaProducer)
 }

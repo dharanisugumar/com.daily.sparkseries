@@ -11,6 +11,10 @@ import org.apache.flink.api.scala.DataSet
 import org.apache.flink.types.Row
 import scala.beans.BeanProperty
 
+/** Package for JdbcSink
+ * @author  : Dharani Sugumar
+ * @version : 1.0
+ */
 class JdbcSink(dataSource: BasicDataSource, sql: String) extends BatchSinkConnector[Row] {
 
   val BATCH_SIZE = 500
@@ -19,7 +23,8 @@ class JdbcSink(dataSource: BasicDataSource, sql: String) extends BatchSinkConnec
   @BeanProperty var rowType: RowTypeInfo = _
 
   appContext.jobLogger.eventLog(LogLevelEnum.INFO, appContext.job, LogMessage(appContext.logIdentifier, " ", EventTypeEnum.TASK, TaskStageEnum.Transformation, " sink - jdbc", TaskStatusEnum.STARTED, "", ""))
-
+  /* this method basically load the data into the jdbc table if the jdbc has been selected as the sink.
+   */
   private def getOutputBuilder:JDBCOutputFormat = {
     JDBCOutputFormat.buildJDBCOutputFormat()
       .setDrivername(dataSource.getDriverClassName)

@@ -1,5 +1,10 @@
 package com.akamai.nse.siphocore.connectors.jdbc
 
+/** Package for FileSink
+ * @author  : Dharani Sugumar
+ * @version : 1.0
+ */
+
 abstract class TableWrapper(val databaseName: String) {
 
   type T_SqlType <: SqlQuery
