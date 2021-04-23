@@ -50,7 +50,7 @@ class JdbcCustomLoad(username: String, password: String, driver: String, dbURL: 
   props.setProperty("password", password)
   props.setProperty("oracle.net.ssl_version",version)
 
-  appContext.jobLogger.eventLog(LogLevelEnum.INFO, appContext.job, LogMessage(appContext.logIdentifier, " ", EventTypeEnum.TASK, TaskStageEnum.PreProcessor, "Setting up properties for jdbc  ", TaskStatusEnum.FINISHED, "", ""))
+  //appContext.jobLogger.eventLog(LogLevelEnum.INFO, appContext.job, LogMessage(appContext.logIdentifier, " ", EventTypeEnum.TASK, TaskStageEnum.PreProcessor, "Setting up properties for jdbc  ", TaskStatusEnum.FINISHED, "", ""))
 
 
   connection = DriverManager.getConnection(dbURL,props)
@@ -83,6 +83,7 @@ class JdbcCustomLoad(username: String, password: String, driver: String, dbURL: 
     val sqlArr = sql.split(";")
     try {
       for (sql <- sqlArr) {
+        appContext.jobLogger.eventLog(LogLevelEnum.DEBUG, appContext.job, LogMessage(appContext.logIdentifier, " ", EventTypeEnum.TASK, TaskStageEnum.PreProcessor, s"Deleting tables $sql ", TaskStatusEnum.STARTED, "", ""))
         stmt.executeQuery(sql)
         appContext.jobLogger.eventLog(LogLevelEnum.DEBUG, appContext.job, LogMessage(appContext.logIdentifier, " ", EventTypeEnum.TASK, TaskStageEnum.PreProcessor, s"Truncating tables  $sql", TaskStatusEnum.FINISHED, "", ""))
       }
@@ -202,8 +203,8 @@ class JdbcCustomLoad(username: String, password: String, driver: String, dbURL: 
       appContext.jobLogger.eventLog(LogLevelEnum.DEBUG, appContext.job, LogMessage(appContext.logIdentifier, " ", EventTypeEnum.TASK, TaskStageEnum.PreProcessor, s"Executing Stored Procedure  ", TaskStatusEnum.STARTED, "", ""))
 
       var procName = ""
-      var inputSize = 2
-      var outputSize = 1
+      var inputSize = 0
+      var outputSize = 0
       var prepCall = "?"
       var inKVMap = Map(1->1)
       var dbName = ""
@@ -215,7 +216,7 @@ class JdbcCustomLoad(username: String, password: String, driver: String, dbURL: 
       appContext.jobLogger.eventLog(LogLevelEnum.DEBUG, appContext.job, LogMessage(appContext.logIdentifier, " ", EventTypeEnum.TASK, TaskStageEnum.PreProcessor, s"json ${json} ", TaskStatusEnum.STARTED, "", ""))
       val procVal = List(key.toInt , retry , chunk)
 
-      println("json "+json)
+      //println("json "+json)
       val elements = (json \\ "procedureInfo").children
       for (proc <- elements) {
         val m = proc.extract[ProcedureInfo]
@@ -243,7 +244,8 @@ class JdbcCustomLoad(username: String, password: String, driver: String, dbURL: 
 
       appContext.jobLogger.eventLog(LogLevelEnum.DEBUG, appContext.job, LogMessage(appContext.logIdentifier, " ", EventTypeEnum.TASK, TaskStageEnum.PreProcessor, s"prepcall ${prepCall}", TaskStatusEnum.STARTED, "", ""))
 
-      val stmt = s"CALL $dbName.$procName(${prepCall})"
+      val stmt =  s"CALL $dbName.$procName(${prepCall})"
+
       appContext.jobLogger.eventLog(LogLevelEnum.DEBUG, appContext.job, LogMessage(appContext.logIdentifier, " ", EventTypeEnum.TASK, TaskStageEnum.PreProcessor, s"stmt ${stmt}", TaskStatusEnum.STARTED, "", ""))
 
       val statement = connection.prepareCall(stmt)
