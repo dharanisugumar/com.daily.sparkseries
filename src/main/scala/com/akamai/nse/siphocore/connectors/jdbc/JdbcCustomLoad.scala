@@ -50,7 +50,7 @@ class JdbcCustomLoad(username: String, password: String, driver: String, dbURL: 
   props.setProperty("password", password)
   props.setProperty("oracle.net.ssl_version",version)
 
-  //appContext.jobLogger.eventLog(LogLevelEnum.INFO, appContext.job, LogMessage(appContext.logIdentifier, " ", EventTypeEnum.TASK, TaskStageEnum.PreProcessor, "Setting up properties for jdbc  ", TaskStatusEnum.FINISHED, "", ""))
+  appContext.jobLogger.eventLog(LogLevelEnum.INFO, appContext.job, LogMessage(appContext.logIdentifier, " ", EventTypeEnum.TASK, TaskStageEnum.PreProcessor, "Setting up properties for jdbc  ", TaskStatusEnum.FINISHED, "", ""))
 
 
   connection = DriverManager.getConnection(dbURL,props)

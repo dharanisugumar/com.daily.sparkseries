@@ -17,7 +17,7 @@ class TimestampConverter (val ts: Timestamp = Timestamp.from(Instant.now())) {
   def getMinus1Sec: TimestampConverter = new TimestampConverter(Timestamp.from(Instant.ofEpochMilli(millis-1000)))
 }
 /**
- * this basically useful in timestamp conversions which has made generic and can be used across all the applications
+ * this is basically useful in timestamp conversions which has made generic and can be used across all the applications
  */
 
 
