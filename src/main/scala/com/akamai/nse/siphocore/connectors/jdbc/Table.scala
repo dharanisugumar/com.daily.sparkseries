@@ -18,14 +18,17 @@ trait Table extends AbstractServiceTrait with Serializable {
   def select:   ListMap[String,String]
 
   @throws(classOf[SQLException])
-  def filter(setValue:String):   ListMap[String,String]
+  def filter(setValue:Long):   ListMap[String,String]
 
   @throws(classOf[SQLException])
-  def insert(setValue:String):   ListMap[String,String]
+  def insert(setValue:Long):   ListMap[String,String]
 
   @throws(classOf[SQLException])
-  def update(setValue:String):   ListMap[String,String]
+  def update(setValue:Long):   ListMap[String,String]
 
   @throws(classOf[SQLException])
-  def execute(setValue:String):   ListMap[String,String]
+  def execute(setVal1:Long, setVal2:Int, setVal3:Int):   ListMap[String,String]
+
+  @throws(classOf[SQLException])
+  def execute(setVal:Long):   ListMap[String,String]
 }

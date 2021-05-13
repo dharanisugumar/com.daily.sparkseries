@@ -27,9 +27,11 @@ import scala.io.Source
 @Autowired
 class JdbcCustomLoad(username: String, password: String, driver: String, dbURL: String, file: String, field: String, version: String) extends Table {
 
-
+/* Removing as part of BEX-751 - Expect flow_id as parameter in Open API Flink Jobs and scripts
   @BeanProperty var retry: Int = 3
   @BeanProperty var chunk: Int = 50
+
+ */
 
 
   appContext.jobLogger.eventLog(LogLevelEnum.DEBUG, appContext.job, LogMessage(appContext.logIdentifier, " ", EventTypeEnum.TASK, TaskStageEnum.PreProcessor, "JDBC custom connection ", TaskStatusEnum.STARTED, "", ""))
@@ -50,21 +52,21 @@ class JdbcCustomLoad(username: String, password: String, driver: String, dbURL: 
   props.setProperty("password", password)
   props.setProperty("oracle.net.ssl_version",version)
 
-  appContext.jobLogger.eventLog(LogLevelEnum.INFO, appContext.job, LogMessage(appContext.logIdentifier, " ", EventTypeEnum.TASK, TaskStageEnum.PreProcessor, "Setting up properties for jdbc  ", TaskStatusEnum.FINISHED, "", ""))
+  //appContext.jobLogger.eventLog(LogLevelEnum.INFO, appContext.job, LogMessage(appContext.logIdentifier, " ", EventTypeEnum.TASK, TaskStageEnum.PreProcessor, "Setting up properties for jdbc  ", TaskStatusEnum.FINISHED, "", ""))
 
 
   connection = DriverManager.getConnection(dbURL,props)
   var stmt = connection.createStatement()
 
   /* this method :- buildQuery reads the file and replaces the parameter with the values */
-  def buildQuery(fileName: String, field: String): String = {
+  def buildQuery(fileName: String, field: BigInt): String = {
 
     var qry = ""
     appContext.jobLogger.eventLog(LogLevelEnum.DEBUG, appContext.job, LogMessage(appContext.logIdentifier, " ", EventTypeEnum.TASK, TaskStageEnum.PreProcessor, s"filename ${fileName} and field ${field} ", TaskStatusEnum.FINISHED, "", ""))
     try {
       appContext.jobLogger.eventLog(LogLevelEnum.DEBUG, appContext.job, LogMessage(appContext.logIdentifier, " ", EventTypeEnum.TASK, TaskStageEnum.PreProcessor, "logger inside else  ", TaskStatusEnum.FINISHED, "", ""))
       val file = Source.fromFile(fileName)
-        qry = file.mkString.replaceAllLiterally(s"{process_id}", field).replaceAllLiterally("{retry_num}", retry.toString).replaceAllLiterally("{max_chunk_num}", chunk.toString)
+        qry = file.mkString.replaceAllLiterally(s"{process_id}", s"$field")
       } catch {
       case ex:FileNotFoundException =>
         throw SiphoFileException(ex.getMessage,this.getClass().getName,"buildQuery",fileName)
@@ -79,7 +81,7 @@ class JdbcCustomLoad(username: String, password: String, driver: String, dbURL: 
 
     appContext.jobLogger.eventLog(LogLevelEnum.DEBUG, appContext.job, LogMessage(appContext.logIdentifier, " ", EventTypeEnum.TASK, TaskStageEnum.PreProcessor, "Truncating tables  ", TaskStatusEnum.STARTED, "", ""))
 
-    val sql = buildQuery(file,"key")
+    val sql = buildQuery(file,0)
     val sqlArr = sql.split(";")
     try {
       for (sql <- sqlArr) {
@@ -101,7 +103,7 @@ class JdbcCustomLoad(username: String, password: String, driver: String, dbURL: 
 
   override def select(): ListMap[String,String] = {
 
-    val sql = buildQuery(file,"")
+    val sql = buildQuery(file,0)
     var list = new mutable.MutableList[String]()
     try{
     val rs = stmt.executeQuery(sql)
@@ -123,7 +125,7 @@ class JdbcCustomLoad(username: String, password: String, driver: String, dbURL: 
 
   /* this method :- filter - fetches the records in a loop and update to the list */
 
-  override def filter(key:String): ListMap[String,String] = {
+  override def filter(key:Long): ListMap[String,String] = {
     val sql = buildQuery(file,key)
     var list = new mutable.MutableList[String]()
     try {
@@ -156,7 +158,7 @@ class JdbcCustomLoad(username: String, password: String, driver: String, dbURL: 
 
   /* this method :- insert - insert the records to the table */
 
-  override def insert(key:String): ListMap[String,String] = {
+  override def insert(key:Long): ListMap[String,String] = {
     val sql = buildQuery(file,key)
     appContext.jobLogger.eventLog(LogLevelEnum.DEBUG, appContext.job, LogMessage(appContext.logIdentifier, " ", EventTypeEnum.TASK, TaskStageEnum.PreProcessor, s"query - $sql ", TaskStatusEnum.INPROGRESS, "", ""))
     try {
@@ -180,7 +182,7 @@ class JdbcCustomLoad(username: String, password: String, driver: String, dbURL: 
   /* this method :- update the record to the table */
 
 
-  override def update(key:String): ListMap[String,String] = {
+  override def update(key:Long): ListMap[String,String] = {
     val sql = buildQuery(file,key)
     try{
     stmt.executeUpdate(sql)
@@ -196,8 +198,8 @@ class JdbcCustomLoad(username: String, password: String, driver: String, dbURL: 
     listMap
   }
 
-  override def execute(key:String): ListMap[String,String] = {
-    val sql = buildQuery(file,key)
+  override def execute(param1:Long, param2:Int, param3: Int): ListMap[String,String] = {
+    val sql = buildQuery(file,param1)
     appContext.jobLogger.eventLog(LogLevelEnum.DEBUG, appContext.job, LogMessage(appContext.logIdentifier, " ", EventTypeEnum.TASK, TaskStageEnum.PreProcessor, s"query - $sql ", TaskStatusEnum.INPROGRESS, "", ""))
     try {
       appContext.jobLogger.eventLog(LogLevelEnum.DEBUG, appContext.job, LogMessage(appContext.logIdentifier, " ", EventTypeEnum.TASK, TaskStageEnum.PreProcessor, s"Executing Stored Procedure  ", TaskStatusEnum.STARTED, "", ""))
@@ -206,7 +208,7 @@ class JdbcCustomLoad(username: String, password: String, driver: String, dbURL: 
       var inputSize = 0
       var outputSize = 0
       var prepCall = "?"
-      var inKVMap = Map(1->1)
+      var inKVMap = Map(1->1L)
       var dbName = ""
       var in = 2
       var i = 1
@@ -214,9 +216,82 @@ class JdbcCustomLoad(username: String, password: String, driver: String, dbURL: 
       implicit val formats = DefaultFormats
       val json = parse(sql)
       appContext.jobLogger.eventLog(LogLevelEnum.DEBUG, appContext.job, LogMessage(appContext.logIdentifier, " ", EventTypeEnum.TASK, TaskStageEnum.PreProcessor, s"json ${json} ", TaskStatusEnum.STARTED, "", ""))
-      val procVal = List(key.toInt , retry , chunk)
+      val procVal = List(param1 , param2 , param3)
 
       //println("json "+json)
+      val elements = (json \\ "procedureInfo").children
+      for (proc <- elements) {
+        val m = proc.extract[ProcedureInfo]
+        inputSize = m.inputs.size
+        outputSize = m.outputs.size
+        dbName = m.db_name
+        procName = m.proc_name
+
+      }
+
+      var procKey = ArrayBuffer(1)
+      while(in <= inputSize) {
+        procKey+=in
+        in=in+1
+      }
+      inKVMap = (procKey zip procVal).toMap
+      val outSize = inputSize + outputSize
+
+      appContext.jobLogger.eventLog(LogLevelEnum.DEBUG, appContext.job, LogMessage(appContext.logIdentifier, " ", EventTypeEnum.TASK, TaskStageEnum.PreProcessor, s"Stored procedure ${procName} Execution ", TaskStatusEnum.STARTED, "", ""))
+
+      while( i < outSize){
+        prepCall += ",?"
+        i=i+1
+      }
+
+      appContext.jobLogger.eventLog(LogLevelEnum.DEBUG, appContext.job, LogMessage(appContext.logIdentifier, " ", EventTypeEnum.TASK, TaskStageEnum.PreProcessor, s"prepcall ${prepCall}", TaskStatusEnum.STARTED, "", ""))
+
+      val stmt =  s"CALL $dbName.$procName(${prepCall})"
+
+      appContext.jobLogger.eventLog(LogLevelEnum.DEBUG, appContext.job, LogMessage(appContext.logIdentifier, " ", EventTypeEnum.TASK, TaskStageEnum.PreProcessor, s"stmt ${stmt}", TaskStatusEnum.STARTED, "", ""))
+
+      val statement = connection.prepareCall(stmt)
+
+      for((k,v)<-inKVMap){
+        appContext.jobLogger.eventLog(LogLevelEnum.DEBUG, appContext.job, LogMessage(appContext.logIdentifier, " ", EventTypeEnum.TASK, TaskStageEnum.PreProcessor, s"stmt ${stmt}", TaskStatusEnum.STARTED, "", ""))
+        appContext.jobLogger.eventLog(LogLevelEnum.DEBUG, appContext.job, LogMessage(appContext.logIdentifier, " ", EventTypeEnum.TASK, TaskStageEnum.PreProcessor, s"k ${k} and v ${v}", TaskStatusEnum.STARTED, "", ""))
+        statement.setLong(k,v)
+      }
+      statement.registerOutParameter(outSize, Types.VARCHAR)
+
+      statement.execute()
+      val outParam = statement.getString(outSize)
+      appContext.jobLogger.eventLog(LogLevelEnum.INFO, appContext.job, LogMessage(appContext.logIdentifier, " ", EventTypeEnum.TASK, TaskStageEnum.PreProcessor, s"Stored Procedure ${procName} Executed! and output parameter : ${outParam} ", TaskStatusEnum.FINISHED, "", ""))
+      listMap += (field -> "success")
+    }catch{
+      case e: SQLException =>
+        SiphoSqlException(e.getMessage,this.getClass().getName,"execute")
+        appContext.jobLogger.eventLog(LogLevelEnum.ERROR, appContext.job, LogMessage(appContext.logIdentifier, " ", EventTypeEnum.TASK, TaskStageEnum.PreProcessor, s"Could not execute query ${e.getMessage}", TaskStatusEnum.FAILED, "", ""))
+        listMap += (field -> "fail")
+    }
+    listMap
+  }
+
+  override def execute(param:Long): ListMap[String,String] = {
+    val sql = buildQuery(file,param)
+    appContext.jobLogger.eventLog(LogLevelEnum.DEBUG, appContext.job, LogMessage(appContext.logIdentifier, " ", EventTypeEnum.TASK, TaskStageEnum.PreProcessor, s"query - $sql ", TaskStatusEnum.INPROGRESS, "", ""))
+    try {
+      appContext.jobLogger.eventLog(LogLevelEnum.DEBUG, appContext.job, LogMessage(appContext.logIdentifier, " ", EventTypeEnum.TASK, TaskStageEnum.PreProcessor, s"Executing Stored Procedure  ", TaskStatusEnum.STARTED, "", ""))
+
+      var procName = ""
+      var inputSize = 0
+      var outputSize = 0
+      var prepCall = "?"
+      var inKVMap = Map(1->1L)
+      var dbName = ""
+      var in = 2
+      var i = 1
+
+      implicit val formats = DefaultFormats
+      val json = parse(sql)
+      appContext.jobLogger.eventLog(LogLevelEnum.DEBUG, appContext.job, LogMessage(appContext.logIdentifier, " ", EventTypeEnum.TASK, TaskStageEnum.PreProcessor, s"json ${json} ", TaskStatusEnum.STARTED, "", ""))
+      val procVal = List(param)
+      
       val elements = (json \\ "procedureInfo").children
       for (proc <- elements) {
         val m = proc.extract[ProcedureInfo]
@@ -253,7 +328,7 @@ class JdbcCustomLoad(username: String, password: String, driver: String, dbURL: 
       for((k,v)<-inKVMap){
         appContext.jobLogger.eventLog(LogLevelEnum.DEBUG, appContext.job, LogMessage(appContext.logIdentifier, " ", EventTypeEnum.TASK, TaskStageEnum.PreProcessor, s"stmt ${stmt}", TaskStatusEnum.STARTED, "", ""))
         appContext.jobLogger.eventLog(LogLevelEnum.DEBUG, appContext.job, LogMessage(appContext.logIdentifier, " ", EventTypeEnum.TASK, TaskStageEnum.PreProcessor, s"k ${k} and v ${v}", TaskStatusEnum.STARTED, "", ""))
-        statement.setInt(k,v)
+        statement.setLong(k,v)
       }
       statement.registerOutParameter(outSize, Types.VARCHAR)
 
@@ -269,5 +344,7 @@ class JdbcCustomLoad(username: String, password: String, driver: String, dbURL: 
     }
     listMap
   }
+
+
 }
 

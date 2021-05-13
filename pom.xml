@@ -14,7 +14,7 @@
         <encoding>UTF-8</encoding>
         <scala.version>2.12.0</scala.version>
         <scala.major>2.12</scala.major>
-        <flink.version>1.9.0</flink.version>
+        <flink.version>1.11.2</flink.version>
     </properties>
 
     <dependencies>
@@ -45,14 +45,8 @@
 
         <dependency>
             <groupId>org.apache.flink</groupId>
-            <artifactId>flink-jdbc_2.12</artifactId>
-            <version>1.9.0</version>
-        </dependency>
-
-        <dependency>
-            <groupId>org.apache.flink</groupId>
             <artifactId>flink-connector-jdbc_${scala.major}</artifactId>
-            <version>1.11.2</version>
+            <version>${flink.version}</version>
         </dependency>
 
         <dependency>
@@ -67,11 +61,11 @@
             <version>${flink.version}</version>
         </dependency>
 
-       <dependency>
-            <groupId>org.apache.flink</groupId>
-            <artifactId>flink-jdbc_${scala.major}</artifactId>
-            <version>${flink.version}</version>
-       </dependency>
+<!--       <dependency>-->
+<!--            <groupId>org.apache.flink</groupId>-->
+<!--            <artifactId>flink-jdbc_${scala.major}</artifactId>-->
+<!--            <version>${flink.version}</version>-->
+<!--       </dependency>-->
 
         <dependency>
             <groupId>com.typesafe</groupId>
@@ -124,7 +118,7 @@
         <dependency>
             <groupId>org.scala-lang</groupId>
             <artifactId>scala-library</artifactId>
-            <version>2.12.0</version>
+            <version>${scala.version}</version>
         </dependency>
 
         <dependency>
