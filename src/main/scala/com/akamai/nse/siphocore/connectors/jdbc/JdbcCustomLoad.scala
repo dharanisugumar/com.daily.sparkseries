@@ -291,7 +291,7 @@ class JdbcCustomLoad(username: String, password: String, driver: String, dbURL: 
       val json = parse(sql)
       appContext.jobLogger.eventLog(LogLevelEnum.DEBUG, appContext.job, LogMessage(appContext.logIdentifier, " ", EventTypeEnum.TASK, TaskStageEnum.PreProcessor, s"json ${json} ", TaskStatusEnum.STARTED, "", ""))
       val procVal = List(param)
-      
+
       val elements = (json \\ "procedureInfo").children
       for (proc <- elements) {
         val m = proc.extract[ProcedureInfo]
