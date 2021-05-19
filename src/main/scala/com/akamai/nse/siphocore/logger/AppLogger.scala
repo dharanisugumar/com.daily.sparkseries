@@ -24,9 +24,7 @@ class AppLogger(logger:Logger) extends LoggerTrait {
      "1.0.0"
   }
 
-  def startPipeline(pipelineNameVal: String,
-
-                    ): Unit = {
+  def startPipeline(pipelineNameVal: String): Unit = {
 
     val eventMessage = s"Starting pipeline"
     val currentTimestamp = new TimestampConverter().UTCText("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'")
