@@ -1,52 +1,36 @@
 package com.akamai.nse.siphocore.common
 
-import java.nio.charset.StandardCharsets
-import java.security.NoSuchAlgorithmException
-import java.security.spec.InvalidKeySpecException
-import javax.crypto.spec.{PBEKeySpec, SecretKeySpec}
-import javax.crypto.{Cipher, SecretKeyFactory}
-import scala.util.control.NonFatal
+import java.security.MessageDigest
+import java.util
+import javax.crypto.Cipher
+import javax.crypto.spec.SecretKeySpec
+import org.apache.commons.codec.binary.Base64
+
 
 object Encryption {
 
-  private[this] val KeySalt           = "0495c728-1614-41f6-8ac3-966c22b4a62d".getBytes(StandardCharsets.UTF_8)
-  private[this] val AES               = "AES"
-  private[this] val Algorithm         = AES + "/ECB/PKCS5Padding"
-  private[this] val HashingIterations = 999999
-  private[this] val KeySizeBits       = 128
+  def encrypt(key: String, value: String): String = {
+    val cipher: Cipher = Cipher.getInstance("AES/ECB/PKCS5Padding")
+    cipher.init(Cipher.ENCRYPT_MODE, keyToSpec(key))
+    Base64.encodeBase64String(cipher.doFinal(value.getBytes("UTF-8")))
+  }
 
-  def encrypt(key: SecretKeySpec, bytes: Array[Byte]): Array[Byte] =
-    try {
-      val cipher = Cipher.getInstance(Algorithm)
-      cipher.init(Cipher.ENCRYPT_MODE, key)
-      cipher.doFinal(bytes)
-    } catch {
-      case NonFatal(e) => throw new RuntimeException("Encrypt error", e)
-    }
+  def decrypt(key: String, encryptedValue: String): String = {
+    val cipher: Cipher = Cipher.getInstance("AES/ECB/PKCS5PADDING")
+    cipher.init(Cipher.DECRYPT_MODE, keyToSpec(key))
+    new String(cipher.doFinal(Base64.decodeBase64(encryptedValue)))
+  }
 
-  def decrypt(key: SecretKeySpec, encryptedBytes: Array[Byte]): Array[Byte] =
-    try {
-      val cipher: Cipher = Cipher.getInstance(Algorithm)
-      cipher.init(Cipher.DECRYPT_MODE, key)
-      cipher.doFinal(encryptedBytes)
-    } catch {
-      case NonFatal(e) => throw new RuntimeException("Decrypt error", e)
-    }
+  def keyToSpec(key: String): SecretKeySpec = {
+    var keyBytes: Array[Byte] = (SALT + key).getBytes("UTF-8")
+    val sha: MessageDigest = MessageDigest.getInstance("SHA-1")
+    keyBytes = sha.digest(keyBytes)
+    keyBytes = util.Arrays.copyOf(keyBytes, 16)
+    new SecretKeySpec(keyBytes, "AES")
+  }
 
-  def hashPassword(password: Array[Char],
-                   salt: Array[Byte],
-                   iterations: Int = HashingIterations,
-                   keyLength: Int = KeySizeBits,
-                   hashingAlgorithm: String = "PBKDF2WithHmacSHA512"): Array[Byte] =
-    try {
-      val keyFactory = SecretKeyFactory.getInstance(hashingAlgorithm)
-      val keySpec    = new PBEKeySpec(password, salt, iterations, keyLength)
-      val key        = keyFactory.generateSecret(keySpec)
-      key.getEncoded
-    } catch {
-      case e @ (_: NoSuchAlgorithmException | _: InvalidKeySpecException) => throw new RuntimeException("Password hashing error", e)
-    }
-
+  private val SALT: String =
+    "jMhKlOuJnM34G6NHkqo9V010GhLAqOpF0BePojHgh1HgNg8^72k"
 
 
 }
