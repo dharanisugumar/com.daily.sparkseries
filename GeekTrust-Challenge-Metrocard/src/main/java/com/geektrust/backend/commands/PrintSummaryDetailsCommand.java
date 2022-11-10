@@ -1,6 +1,7 @@
 package com.geektrust.backend.commands;
 
 import com.geektrust.backend.dto.CollectionAmountDto;
+import com.geektrust.backend.dto.PassengerTypeSummaryDto;
 import com.geektrust.backend.exceptions.UserNotFoundException;
 import com.geektrust.backend.service.ITrainSummaryService;
 
@@ -17,14 +18,11 @@ public class PrintSummaryDetailsCommand implements ICommand{
     @Override
     public void execute(List<String> tokens) {
         try {
-            List<CollectionAmountDto> collectionDtoList = summaryService.calculateTotalAmount();
-//            CollectionAmountDto collectionAmountDto = summaryService.calculateTotalAmount();
-            collectionDtoList.forEach(collectDto -> System.out.println(collectDto.toString()));
-//            System.out.println(collectionAmountDto);
+            summaryService.calculateTotalAmount();
         } catch (UserNotFoundException e) {
             System.out.println(e.getMessage());
         } catch (Exception e){
-            System.out.println(e.toString());
+            System.out.println(e);
         }
     }
 

@@ -1,7 +1,7 @@
 package com.geektrust.backend.commands;
 
 import com.geektrust.backend.constants.Constants;
-import com.geektrust.backend.enums.PassengerCategory;
+import com.geektrust.backend.enums.PassengerType;
 import com.geektrust.backend.enums.PassengerTravelType;
 import com.geektrust.backend.exceptions.AddCheckInFailedException;
 import com.geektrust.backend.service.ITrainCollectionService;
@@ -17,10 +17,10 @@ public class AddCheckInCommand implements ICommand{
     @Override
     public void execute(List<String> tokens) {
         try {
-            String card = String.valueOf(tokens.get(Constants.ONE));
-            PassengerCategory passengerType = PassengerCategory.valueOf(tokens.get(Constants.TWO));
-            PassengerTravelType passengerTravelType=PassengerTravelType.valueOf(tokens.get(Constants.THREE));
-            checkInCollectionService.addCheckInForUser(card,passengerType,passengerTravelType);
+            String metroCardNumber = String.valueOf(tokens.get(Constants.ONE));
+            PassengerType passengerType = PassengerType.valueOf(tokens.get(Constants.TWO));
+            String fromStation = String.valueOf(tokens.get(Constants.THREE));
+            checkInCollectionService.addCheckInForUser(metroCardNumber,passengerType,fromStation);
         } catch (AddCheckInFailedException e) {
             System.out.println(e.getMessage());
         } catch (Exception e) {

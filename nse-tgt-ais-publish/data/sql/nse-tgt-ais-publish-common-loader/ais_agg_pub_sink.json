@@ -1,0 +1,9 @@
+{ "0":{"name": "pubRequestId", "type": "INT"},
+       "1":{"name": "invoiceDate", "type": "DATE"},
+       "2":{"name": "pubStatId", "type": "BIGINT"},
+       "3":{"name": "statTypeId","type": "BIGINT"},
+       "4":{"name": "statType", "type": "CHAR"},
+       "5":{"name": "isCummulativeStat", "type": "BIGINT"},
+       "6":{"name": "isCpCodeStat", "type": "BIGINT"},
+       "7":{"name": "stat", "type": "BIGINT"}
+}

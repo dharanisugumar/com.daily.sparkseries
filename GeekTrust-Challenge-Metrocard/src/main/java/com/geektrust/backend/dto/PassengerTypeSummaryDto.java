@@ -1,20 +1,19 @@
 package com.geektrust.backend.dto;
 
-import com.geektrust.backend.enums.PassengerCategory;
+import com.geektrust.backend.entities.PassengerTrip;
+import com.geektrust.backend.enums.PassengerType;
 
 public class PassengerTypeSummaryDto {
-    private final PassengerCategory passengerCategory;
-    private final Integer passengerCount;
+    private final PassengerType PassengerType;
+    private final int passengerCount;
 
-    public PassengerTypeSummaryDto(Integer passengerCount, PassengerCategory passengerCategory) {
+    public PassengerTypeSummaryDto(PassengerType PassengerType, int passengerCount) {
+        this.PassengerType = PassengerType;
         this.passengerCount = passengerCount;
-        this.passengerCategory = passengerCategory;
     }
 
     @Override
     public String toString() {
-        return "PASSENGER_TYPE_SUMMARY " +
-                passengerCategory +
-                " " + passengerCount;
+        return PassengerType + "  " + passengerCount;
     }
 }

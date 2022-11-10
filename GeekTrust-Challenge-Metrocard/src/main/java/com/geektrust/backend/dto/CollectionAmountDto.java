@@ -1,23 +1,21 @@
 package com.geektrust.backend.dto;
 
-import com.geektrust.backend.enums.PassengerTravelType;
-
 public class CollectionAmountDto {
-    private final PassengerTravelType passengerTravelType;
+    private final String fromStation;
     private final Integer collectionAmount;
-    private final Integer discount;
+    private final int discount;
 
-    public CollectionAmountDto(Integer collectionAmount, PassengerTravelType passengerTravelType, Integer discount) {
+    public CollectionAmountDto(String fromStation,Integer collectionAmount, int discount) {
+        this.fromStation = fromStation;
         this.collectionAmount = collectionAmount;
-        this.passengerTravelType = passengerTravelType;
         this.discount = discount;
     }
 
     @Override
     public String toString() {
-        return "TOTAL_COLLECTION " +
-                passengerTravelType +
-                " " + collectionAmount +
-                " " + discount;
+        return "TOTAL_COLLECTION  " +
+                fromStation +
+                "  " + collectionAmount +
+                        "  " + discount ;
     }
 }

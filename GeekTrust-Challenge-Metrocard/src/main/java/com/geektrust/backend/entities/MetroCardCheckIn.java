@@ -1,116 +1,95 @@
 package com.geektrust.backend.entities;
 
 import com.geektrust.backend.constants.Constants;
-import com.geektrust.backend.enums.PassengerCategory;
-import com.geektrust.backend.enums.PassengerTravelType;
+import com.geektrust.backend.enums.PassengerType;
 
-import java.util.Map;
-import java.util.TreeMap;
+import java.util.*;
 
 public class MetroCardCheckIn {
-    private  Map<String,Integer> cardBalance;
-    private  Map<String, Integer> cardPassengerTypeBalance;
-    private  Map<PassengerTravelType, Integer> travelTypeBalance;
-    private  Map<PassengerCategory,TicketFare> listOfCategory;
-    private PassengerTravelType passengerTravelType;
-//    private final PassengerTravelType passengerTravelType;
+    private final Map<String,Integer> metroCardBalanceMap;
+    private final Map<PassengerTrip,Integer> listOfPassengerTypeSummary;
+    private final Map<String,Integer> passengerTripMap;
+    private final Map<String,String> passengerTravelTypeMap;
+    private final Map<String, List<Integer>> stationMap;
+    private final Map<PassengerType,Integer> passengerTypeMap;
+    private final Map<PassengerType,Integer> listOfPasSumary;
 
-   public MetroCardCheckIn(){}
-
-    public MetroCardCheckIn(PassengerTravelType passengerTravelType) {
-        this.passengerTravelType = passengerTravelType;
-        this.travelTypeBalance = new TreeMap<PassengerTravelType,Integer>();
-        this.listOfCategory = new TreeMap<PassengerCategory,TicketFare>();
-        this.cardBalance = new TreeMap<String,Integer>();
-        this.cardPassengerTypeBalance = new TreeMap<String,Integer>();
+    public MetroCardCheckIn() {
+        this.passengerTypeMap = new HashMap<>();
+        this.listOfPassengerTypeSummary = new TreeMap<>();
+        this.listOfPasSumary = new TreeMap<>();
+        this.metroCardBalanceMap = new HashMap<>();
+        this.passengerTripMap = new HashMap<>();
+        this.passengerTravelTypeMap = new HashMap<>();
+        this.stationMap = new HashMap<>();
     }
 
-    public void addBalanceToCurrentUser(String card, Integer balance){
-        cardBalance.put(card,balance);
+    public void addBalanceToCurrentUser(String metroCardNumber, Integer metroCardBalance){
+        metroCardBalanceMap.put(metroCardNumber,metroCardBalance);
     }
 
-    public void debitBalanceToCurrentUser(String card, TicketFare ticketFare, Map<PassengerTravelType,Integer> travelTypeBalance){ //PassengerCategory stationName,PassengerCategory JourneyCount){
-        int remainingBalance,ticketAmount,passengerBalance,totalAmount,serviceFee=0;
-        ticketAmount = ticketFare.getPrice();
-
-        cardPassengerTypeBalance.put(card,ticketAmount);
-        passengerBalance=cardBalance.get(card);
-
-        if (passengerBalance < ticketAmount){ //50 < 200
-            // do the recharge
-            remainingBalance = ticketAmount - passengerBalance;
-            serviceFee = (int) (remainingBalance * Constants.PENALTY);
-            remainingBalance = 0;
-            cardBalance.put(card,remainingBalance);
-        }
-        else{
-            remainingBalance = passengerBalance - ticketAmount;
-            cardBalance.put(card,remainingBalance);
+    public void calculateTotalCollection(String metroCardNumber,String fromStation, PassengerType passengerType,TicketFare ticketFare,int noOfTrips) {
+        int currentBalance = 0, existingBalance, serviceCharge = 0, discountedFare, tripCount , discount;
+        if (passengerTripMap.containsKey(metroCardNumber)) {
+            passengerTripMap.put(metroCardNumber,passengerTripMap.get(metroCardNumber)+1);
+        }else{
+            passengerTripMap.put(metroCardNumber,noOfTrips);
         }
 
-        for(Integer fare: cardPassengerTypeBalance.values()){
-            ticketAmount+=fare;
+        passengerTravelTypeMap.put(metroCardNumber, fromStation);
+        //get trip count of passenger
+        tripCount = passengerTripMap.get(metroCardNumber);
+        // get the existing balance of the passenger
+        existingBalance = metroCardBalanceMap.get(metroCardNumber);
+        if (passengerTravelTypeMap.containsKey(metroCardNumber) && (tripCount %2==0)) {
+            // set the passengertraveltype as return and update the balance
+            // return journey apply 50% discount
+            discountedFare = (int) (ticketFare.getPrice() * Constants.RETURN_DISCOUNT);
+            discount = discountedFare;
+        } else {
+            // single trip
+            discountedFare = ticketFare.getPrice();
+            discount = 0;
         }
-        totalAmount = serviceFee+ticketAmount;
-        travelTypeBalance.put(passengerTravelType,totalAmount);
-        ////        cardPassengerTypeBalance.put(card, Arrays.asList(passengerCategory,"ONE_WAY=" + stationName, JourneyCount+1));
-//        // Checks if the user is already present and journet count as even mark as return
-//            if (cardPassengerTypeBalance.containsKey(card)) && (cardPassengerTypeBalance.get(card).get(2))%2==0){
-//                // set card as return journey
-//                cardPassengerTypeBalance.put(card, Arrays.asList(passengerCategory,"RETURN=" + stationName, JourneyCount+1));
-//            }
-//            // "MC1" : List(adult,FROM = STATIONNAME,1)
-//        currentBalanceOfUser = cardBalance.get(card);
-//        if (currentBalanceOfUser < passengerCategory.getPrice()) { //50<200
-//            remainingBalance = passengerCategory.getPrice() - currentBalanceOfUser;
-//            newBalance = 0;
-//            cardBalance.put(card,newBalance);
-//            amount += remainingBalance * Constants.SERVICE_FEE;
-//        }
-//        else {
-//            cardBalance.put(card, remainingBalance);
-//        }
-//        cardPassengerType.put(card,"TO")
-//        cardPassengerType.put(card,"FROM");
-//        find_one_way_return = cardPassengerType.get(card);
-//        if find_one_way_return == "TO"{
-//            cardBalance.get(card) - Constants.ADULT_RETURN
-//        }
-//        currentBalanceOfUser = cardBalance.get(card);
-//
-//        if currentBalanceOfUser < passengerCategory.getPrice(): //50<200
-//        remainingBalance = passengerCategory.getPrice - currentBalanceOfUser;
-////        remainingBalance = remainingBalance * Constants.SERVICE_FEE; //to br done in summaryservice
-//        getTravelType = cardPassengerTypeBalance.get(card).get(0)(1); //returns from or to
-//        if getTravelType =="ONE_WAY":
-//            addTravelType(card,passengerCategory,getTravelType)
-//        ///// get current balance of that card {"MC1": "ADULT", {FROM : "CENTRAL"},{TO: "AIPORT"} }
-//        // if current balance < constants.adult.one_way
-//
-//        listOfBalance.put(card,balance);
+        if (existingBalance < discountedFare) {
+            //recharge, calculate service fee
+            serviceCharge = (int) ((discountedFare - existingBalance) * Constants.PENALTY);
+            metroCardBalanceMap.put(metroCardNumber, currentBalance);
+        } else { //has sufficient balance
+            currentBalance = existingBalance - ticketFare.getPrice();
+            // update current balance
+            metroCardBalanceMap.put(metroCardNumber, currentBalance);
+        }
+        if (stationMap.containsKey(fromStation)){
+            stationMap.put(fromStation, Arrays.asList(stationMap.get(fromStation).get(0)+discountedFare+serviceCharge,stationMap.get(fromStation).get(1)+discount));
+        }else{
+            stationMap.put(fromStation,Arrays.asList(discountedFare+serviceCharge,discount));
+        }
     }
 
-    public void updateTravelCategoryToPassenger(PassengerCategory passengerCategory, TicketFare ticketFare){
-        listOfCategory.put(passengerCategory,ticketFare);
+    public void addPassengerTravelType(String metroCardNumber,String fromStation, PassengerType passengerType,int noOfTrips) {
+        if (listOfPassengerTypeSummary.containsKey(new PassengerTrip(fromStation,passengerType))){
+            listOfPassengerTypeSummary.put(new PassengerTrip(fromStation,passengerType), listOfPassengerTypeSummary.getOrDefault(new PassengerTrip(fromStation,passengerType),noOfTrips)+1);
+        }else{
+            listOfPassengerTypeSummary.put(new PassengerTrip(fromStation,passengerType),noOfTrips);
+        }
+
     }
 
-    public Map<String, Integer> getTicketFare() {
-        return new TreeMap<String, Integer>(cardPassengerTypeBalance);
+        public void debitBalanceToCurrentUser(String metroCardNumber, String fromStation, PassengerType passengerType, TicketFare ticketFare, int noOfTrips){
+        calculateTotalCollection(metroCardNumber,fromStation, passengerType, ticketFare,noOfTrips);
+        addPassengerTravelType(metroCardNumber,fromStation, passengerType, noOfTrips);
     }
 
-    public Map<String, Integer> getPassengerBalance() {
-        return new TreeMap<String, Integer>(cardBalance);
+    public HashMap<String, List<Integer>> getListOfTotalCollection() {
+        return new HashMap<>(stationMap);
     }
 
-    public TreeMap<PassengerTravelType, Integer> getListOfTravelTypeBalance() {
-        return new TreeMap<PassengerTravelType, Integer>(travelTypeBalance);
+    public TreeMap<PassengerTrip,Integer> getListOfPassengerTypeSummary() {
+        return new TreeMap<>(listOfPassengerTypeSummary);
     }
 
-    public Map<PassengerCategory, TicketFare> getListOfCategory() {
-        return new TreeMap<PassengerCategory, TicketFare>(listOfCategory);
+    public TreeMap<PassengerType,Integer> getListOfPasSumary() {
+        return new TreeMap<>(listOfPasSumary);
     }
-
-//    public Map<PassengerCategory, Integer> getListOfPassengers() {
-//        return new TreeMap<PassengerCategory, Integer>(listOfPassengers);
-//    }
 }
